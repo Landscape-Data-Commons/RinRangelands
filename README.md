@@ -6,7 +6,7 @@
 ## To get started, download this repository to your computer: 
 1. Navigate to this GitHub repository: github.com/Landscape-Data-Commons/RinRangelands
 2. Navigate to the green <> Code button, and select **Download Zip**
-3.Save on your computer and unzip the file
+3. Save on your computer and unzip the file
 
 
 ## Install R and RStudio
