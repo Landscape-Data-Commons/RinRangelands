@@ -10,5 +10,5 @@
 
 
 ## Install R and RStudio
-As of January 20, 2023, the current R version is 4.2.2 and the current RStudio version is 2022.12.0+353. You should download current versions of both these programs and install them on your computer if you haven’t already. You can download R from CRAN and the free version of RStudio from their site. 
+Install the current versions of R and R Studio on your computer if you haven’t already. You can download R from CRAN and the free version of RStudio from their site. 
 https://posit.co/download/rstudio-desktop/
