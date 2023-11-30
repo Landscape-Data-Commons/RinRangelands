@@ -1,0 +1,84 @@
+---
+title: "Accessing public data with *trex* (Terrestrial Rangeland data EXtraction)"
+author: "Nelson Stauffer"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(trex)
+```
+
+## What is *trex*?
+The package *trex* contains functions for accessing publicly available ecological data via API. These can be used to query databases without needing to know the ins and outs of the APIs themselves. This is particularly helpful when building automation into workflows that you plan to run repeatedly with different data, e.g., a workflow that retrieves and summarizes data for a given polygon defining an area of interest.
+
+## What kind of data can *trex* access?
+Currently, *trex* supports two APIs, the Ecosystem Dynamics Interpretive Tool ([EDIT](https://edit.jornada.nmsu.edu/)) and the Landscape Data Commons ([LDC](https://landscapedatacommons.org/)).
+
+### Ecosystem Dynamics Interpretive Tool (EDIT)
+EDIT is a database containing Ecological Site Descriptions (ESDs) which define the properties associated with ecological sites. An ecological site is all the areas of a landscape which share geophysical and climatic properties and which produce similar kinds and amounts of vegetation. Knowing what ecological site a part of a landscape falls in can inform interpreting data from that area, e.g., having 10% of a location covered with vegetation means something very different on a steep, dry, gravelly slope than in a flat, loamy grassland.
+
+### Landscape Data Commons (LDC)
+The Landscape Data Commons is a repository for multiple ecological data sets including data from the Bureau of Land Management (BLM) Assessment, Inventory, and Monitoring program ([AIM](https://www.blm.gov/aim)) and the Natural Resources Conservation Service ([NRCS](https://www.nrcs.usda.gov/)) Landscape Monitoring Framework (LMF). These are "raw" data from the field which have undergone quality control measures and are suitable for deriving ecological indicators, e.g., percent foliar cover or average sagebrush height.
+
+## Using *trex*
+The functions in *trex* all have names starting with "`fetch_`" because that's all they do: fetch data from databases via API queries. There are not functions for data processing, so you may be interested in using [terradactyl](https://github.com/Landscape-Data-Commons/terradactyl) once you've retrieved your data.
+
+### EDIT
+For EDIT, there is a single function, `fetch_edit()`, which will return the properties for one or more ecological sites.
+
+#### `fetch_edit()`
+The most basic use of `fetch_edit()` is to retrieve information related to a single Major Land Resource Area ([MLRA](https://www.nrcs.usda.gov/resources/data-and-reports/major-land-resource-area-mlra)). There are several types of data that can be retrieved, however, and you must specify which you want to fetch. So, at minimum, you'll need an MLRA ID and a data type.
+
+Let's assume that we have some ecological data collected in MLRA 042B and we'd like to know which ecological sites are in that area. We'd use `fetch_edit()` while specifying that the MLRA ID is `"042B"` and that the type of data we want is `"ecosites"` which will return a data frame for that MLRA with every ecological site ID, name, and historic ID (in case it's changed).
+
+``` {r basic_fetch_edit, eval = TRUE}
+# This will return all of ecological sites associated with MLRA 042B in EDIT
+ecosites <- fetch_edit(mlra = "042B",
+                       data_type = "ecosites")
+```
+
+This is interesting, but not the most useful for most purposes outside trying to update the ecological site IDs associated with older data.
+
+There are many different data types, however, including climatic, landform, soil, and annual production. Depending on what questions you're trying to answer, you may need to retrieve multiple data types and combine the data.
+
+``` {r fetch_edit_data_types, eval = TRUE}
+# This will return all of the available climate information in EDIT associated
+# with ecological sites within MLRA 042B
+climate <- fetch_edit(mlra = "042B",
+                      data_type = "climate")
+
+# This will return all of the available landform information in EDIT associated
+# with ecological sites within MLRA 042B
+landform <- fetch_edit(mlra = "042B",
+                       data_type = "landforms")
+
+# This will return all of the available soil profile information in EDIT
+# associated with ecological sites within MLRA 042B
+soil <- fetch_edit(mlra = "042B",
+                   data_type = "soil profile")
+
+# This will return all of the available annual production information in EDIT
+# associated with ecological sites within MLRA 042B
+annual_production <- fetch_edit(mlra = "042B",
+                                data_type = "annual production")
+```
+
+### LDC
+For the LDC, there is a core function, `fetch_ldc()` but also specialized functions for retrieving data associated with a spatial extent, `fetch_ldc_spatial()`, and associated with ecological sites, `fetch_ldc_ecosite()`.
+
+#### `fetch_ldc()`
+
+``` {r basic_fetch_ldc}
+```
+
+#### `fetch_ldc_spatial()`
+
+``` {r basic_fetch_ldc_spatial}
+```
+
+#### `fetch_ldc_ecosite()`
+
+``` {r basic_fetch_ldc_ecosite}
+```
