@@ -4,9 +4,9 @@ library(ggplot2)
 library(viridis)
 
 # get polygons
-chihuahuan_desert <- read_sf("MapLayers/ChihuahuanDesert.shp")
-nm <- read_sf("MapLayers/NewMexico_Albers.shp")
-sandy_esg <- read_sf("MapLayers/SandyESG.shp")
+chihuahuan_desert <- read_sf("Part2/MapLayers/ChihuahuanDesert.shp")
+nm <- read_sf("Part2/MapLayers/NewMexico_Albers.shp")
+sandy_esg <- read_sf("Part2/MapLayers/SandyESG.shp")
 
 # extract data from LDC
 data <- fetch_ldc_spatial(chihuahuan_desert,
@@ -15,7 +15,8 @@ data <- fetch_ldc_spatial(chihuahuan_desert,
 header <-fetch_ldc(data_type = "header")
 
 # get benchmark data
-benchmark <- readRDS("~/Papers/WindErosionBenchmarks/data/raw/header.Rdata")
+benchmark <- read.csv("Part2/benchmark_points.csv")
+
 
 # note if data have been used in benchmarking
 data <- data |> subset(!is.na(Longitude_NAD83)) |>
@@ -59,9 +60,10 @@ ggplot(data_nm |> subset(benchmark== "new" & !Year %in% 2023), aes(x = Year,
   geom_point(aes(color = evaluated))+
   viridis::scale_color_viridis(discrete = T)
 
-
+#TODO Nelson, could you help me make this intersection work? I think I moved to R because it wasn't going well in R
 # work with intersected data
-nm_data <- sf::st_read("ldc_data_nm_intersect.shp")
+nm_data <- sf::st_read("~/Papers/DataCommons/AEL_submission/R2/Vignette/ldc_data_nm_intersect.shp")
+
 nm_data <- nm_data |> dplyr::mutate(NWERN_JER = dplyr::case_when(PrjctKy %in% "NWERN_JER"~ "yes"),
                                     Chihuahuan_desert = "yes",
                                     DateVisited = lubridate::as_date(DatVstd),

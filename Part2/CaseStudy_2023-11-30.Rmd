@@ -1,0 +1,28 @@
+---
+title: 'Case Study: How Does Drought Impact Wind Erosion Risk?'
+author: "Sarah McCord, Eric Jensen"
+date: "2023-11-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+Now we will use all of the skills we have learned in this workshop in a real world case study. This example walks through using R and publicly available datasets to examine how drought is influencing wind erosion in the Chihuahuan Desert. Our goal is to reproduce Figure 4 from McCord et al. 2024 (DOI LINK).
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

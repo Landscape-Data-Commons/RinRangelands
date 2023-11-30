@@ -1,0 +1,211 @@
+<metadata xml:lang="en"><Esri><CreaDate>20230718</CreaDate><CreaTime>13323200</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>FALSE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\Toolboxes\Data Management Tools.tbx\AddIndex" Date="20230718" Time="133232">AddIndex D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap us_l3code;majcompflag ecoid_compflag_idx NON_UNIQUE NON_ASCENDING</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\DeleteField" Date="20230824" Time="150928">DeleteField D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap surf_text_inlieu_forquery "Delete Fields"</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\AddField" Date="20230824" Time="150929">AddField D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap surf_text_inlieu_forquery Text # # 100 # NULLABLE NON_REQUIRED #</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\CalculateField" Date="20230824" Time="153945">CalculateField D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap surface_texture_forquery surfTextFunc(!surf_texture!) PYTHON "
+surfTextDict = {
+"C": "clay",
+"CL": "clay loam",
+"COS": "coarse sand",
+"COSL": "coarse sandy loam",
+"FS": "fine sand",
+"FSL": "fine sandy loam",
+"L": "loam",
+"LCOS": "loamy coarse sand",
+"LFS": "loamy fine sand",
+"LS": "loamy sand",
+"LVFS": "loamy very fine sand",
+"S": "sand",
+"SC": "sandy clay",
+"SCL": "sandy clay loam",
+"SI": "silt",
+"SIC": "silty clay",
+"SICL": "silty clay loam",
+"SIL": "silt loam",
+"SL": "sandy loam",
+"VFS": "very fine sand",
+"VFSL": "very fine sandy loam"
+}
+def getKeyVal(key):
+  str = ""
+  if len(key) &gt; 3 and key.endswith("ART"):
+    key = key[0:-3]
+  if key.endswith("V"):
+    key = key[0:-1]
+  if key.endswith("X"):
+    key = key[0:-1]
+  if key in surfTextDict.keys():
+    str += surfTextDict[key]
+  return str
+
+def surfTextFunc(keylist):
+  finalstr = ""
+  keys = keylist.split(" ")
+  for key in keys:
+    #if len(finalstr) &gt; 1:
+    finalstr += "!"
+    if key.endswith("-"):
+      key = key[0:-1]
+    if key.find("-") &gt; 0:
+      key2 = key.split("-")
+      if len(getKeyVal(key2[0])):
+          finalstr += getKeyVal(key2[0]) + " "
+      finalstr += getKeyVal(key2[1])
+    else:
+      finalstr += getKeyVal(key)
+  if len(finalstr) &gt; 1:
+    finalstr += "!"
+  else:
+    finalstr = ""
+  return finalstr
+" Text NO_ENFORCE_DOMAINS</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\CalculateField" Date="20230824" Time="162519">CalculateField D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap surf_text_inlieu_forquery textInLieuFunc(!tex_in_lieu!) PYTHON "
+textInLieuDict = {
+"ART": "artifactual",
+"BR": "bedrock",
+"BY": "boulders",
+"CB": "cobbles",
+"CGM": "coarse gypsum material",
+"CN": "channers",
+"FGM": "fine gypsum material",
+"FL": "flagstones",
+"GR": "gravel",
+"HPM": "highly decomposed plant material",
+"ICE": "ice",
+"MPM": "moderately decomposed plant material",
+"MPT": "mucky peat",
+"MUCK": "muck",
+"PBY": "paraboulders",
+"PCB": "paracobbles",
+"PCN": "parachanners",
+"PEAT": "peat",
+"PFL": "paraflagstones",
+"PG": "paragravel",
+"PST": "parastones",
+"SPM": "slightly decomposed plant material",
+"ST": "stones",
+"W": "water"
+}
+def getKeyVal(key):
+  str = ""
+  if len(key) &gt; 3 and key.endswith("ART"):
+    key = key[0:-3]
+  if key.endswith("V"):
+    key = key[0:-1]
+  if key.endswith("X"):
+    key = key[0:-1]
+  if key in textInLieuDict.keys():
+    str += textInLieuDict[key]
+  return str
+
+def textInLieuFunc(keylist):
+  finalstr = ""
+  keys = keylist.split(" ")
+  for key in keys:
+    finalstr += "!"
+    if key.endswith("-"):
+      key = key[0:-1]
+    if key.find("-") &gt; 0:
+      key2 = key.split("-")
+      if len(getKeyVal(key2[0])):
+          finalstr += getKeyVal(key2[0].upper()) + " "
+      finalstr += getKeyVal(key2[1].upper())
+    else:
+      finalstr += getKeyVal(key.upper())
+  if len(finalstr) &gt; 1:
+    finalstr += "!"
+  else:
+    finalstr = ""
+  return finalstr
+" Text NO_ENFORCE_DOMAINS</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\DeleteField" Date="20230829" Time="201305">DeleteField D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap surf_text_inlieu_forquery "Delete Fields"</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\AddField" Date="20230829" Time="201306">AddField D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap surf_text_inlieu_forquery Text # # 40 # NULLABLE NON_REQUIRED #</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\CalculateField" Date="20230829" Time="204517">CalculateField D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap surface_texture_forquery surfTextFunc(!surf_texture!) PYTHON "
+surfTextDict = {
+"C": "clay",
+"CL": "clay loam",
+"COS": "coarse sand",
+"COSL": "coarse sandy loam",
+"FS": "fine sand",
+"FSL": "fine sandy loam",
+"L": "loam",
+"LCOS": "loamy coarse sand",
+"LFS": "loamy fine sand",
+"LS": "loamy sand",
+"LVFS": "loamy very fine sand",
+"S": "sand",
+"SC": "sandy clay",
+"SCL": "sandy clay loam",
+"SI": "silt",
+"SIC": "silty clay",
+"SICL": "silty clay loam",
+"SIL": "silt loam",
+"SL": "sandy loam",
+"VFS": "very fine sand",
+"VFSL": "very fine sandy loam"
+}
+def getKeyVal(key):
+  str = ""
+  if len(key) &gt; 3 and key.endswith("ART"):
+    key = key[0:-3]
+  if key.endswith("V"):
+    key = key[0:-1]
+  if key.endswith("X"):
+    key = key[0:-1]
+  if key in surfTextDict.keys():
+    str += surfTextDict[key]
+  return str
+
+def surfTextFunc(keylist):
+  finalstr = ""
+  keys = keylist.split(" ")
+  for key in keys:
+    #if len(finalstr) &gt; 1:
+    finalstr += "!"
+    if key.endswith("-"):
+      key = key[0:-1]
+    if key.find("-") &gt; 0:
+      key2 = key.split("-")
+      if len(getKeyVal(key2[0])):
+          finalstr += getKeyVal(key2[0]) + " "
+      finalstr += getKeyVal(key2[1])
+    else:
+      finalstr += getKeyVal(key)
+  if len(finalstr) &gt; 1:
+    finalstr += "!"
+  else:
+    finalstr = ""
+  return finalstr
+" Text NO_ENFORCE_DOMAINS</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\CalculateField" Date="20230829" Time="210912">CalculateField D:\SSURGO_QT\SSURGO_2022\ssurgoqt_20230704.gdb\eco_mu_ceap surf_text_inlieu_forquery textInLieuFunc(!tex_in_lieu!) PYTHON "
+textInLieuDict = {
+"art": "artifactual",
+"br": "bedrock",
+"by": "boulders",
+"cb": "cobbles",
+"ce": "coprogenous earth",
+"cgm": "coarse gypsum material",
+"cind": "cinders",
+"cn": "channers",
+"fgm": "fine gypsum material",
+"fl": "flagstones",
+"frag": "fragmental material",
+"gr": "gravel",
+"hpm": "highly decomposed plant material",
+"ice": "ice",
+"ind": "indurated",
+"mat": "material",
+"mpm": "moderately decomposed plant material",
+"mpt": "mucky peat",
+"muck": "muck",
+"pby": "paraboulders",
+"pcb": "paracobbles",
+"pcn": "parachanners",
+"peat": "peat",
+"pfl": "paraflagstones",
+"pg": "paragravel",
+"pst": "parastones",
+"spm": "slightly decomposed plant material",
+"st": "stones",
+"var": "variable",
+"w": "water",
+"wb": "weathered bedrock"
+}
+
+def textInLieuFunc(key):
+  str = ""
+  if key in textInLieuDict.keys():
+    str += textInLieuDict[key]
+  return str
+" Text NO_ENFORCE_DOMAINS</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Analysis Tools.tbx\PairwiseClip" Date="20230920" Time="114619">PairwiseClip ssurgodata "MLRA_52 selection" C:\Users\nickwebb\Documents\_HPFiles\01_USDA-Drive_Files\GIS_Data\Benchmarks_Paper\BenchmarksMap\BenchmarksMap.gdb\ssurgodata_PairwiseClip #</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Analysis Tools.tbx\PairwiseClip" Date="20230920" Time="114802">PairwiseClip ssurgodata_PairwiseClip "US_AlbersEAC selection" C:\Users\nickwebb\Documents\_HPFiles\01_USDA-Drive_Files\GIS_Data\Benchmarks_Paper\BenchmarksMap\BenchmarksMap.gdb\ssurgodata_Clip #</Process><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Conversion Tools.tbx\ExportFeatures" Date="20231010" Time="084243">ExportFeatures "Sandy ESG" C:\Users\nickwebb\Documents\_HPFiles\01_USDA-Drive_Files\GIS_Data\Benchmarks_Paper\BenchmarksMap\SandyESG.shp # NOT_USE_ALIAS "mukey "mukey" true true false 30 Text 0 0,First,#,Sandy ESG,mukey,0,30;areasymbol "areasymbol" true true false 20 Text 0 0,First,#,Sandy ESG,areasymbol,0,20;spatialver "spatialver" true true false 8 Double 0 0,First,#,Sandy ESG,spatialver,-1,-1;musym "musym" true true false 6 Text 0 0,First,#,Sandy ESG,musym,0,6;areaname "areaname" true true false 132 Text 0 0,First,#,Sandy ESG,areaname,0,132;muname "muname" true true false 190 Text 0 0,First,#,Sandy ESG,muname,0,190;mlra_sym "mlra_sym" true true false 22 Text 0 0,First,#,Sandy ESG,mlra_sym,0,22;compname "compname" true true false 60 Text 0 0,First,#,Sandy ESG,compname,0,60;cokey "cokey" true true false 4 Long 0 0,First,#,Sandy ESG,cokey,-1,-1;comppct_r "comppct_r" true true false 4 Long 0 0,First,#,Sandy ESG,comppct_r,-1,-1;landform "landform" true true false 30 Text 0 0,First,#,Sandy ESG,landform,0,30;min_yr_water "min_yr_water" true true false 4 Long 0 0,First,#,Sandy ESG,min_yr_water,-1,-1;subgroup "subgroup" true true false 5 Text 0 0,First,#,Sandy ESG,subgroup,0,5;greatgroup "greatgroup" true true false 5 Text 0 0,First,#,Sandy ESG,greatgroup,0,5;wei "wei" true true false 4 Long 0 0,First,#,Sandy ESG,wei,-1,-1;weg "weg" true true false 2 Text 0 0,First,#,Sandy ESG,weg,0,2;h_spodic_flag "h_spodic_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_spodic_flag,-1,-1;h_lithic_flag "h_lithic_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_lithic_flag,-1,-1;h_parlithic_flag "h_parlithic_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_parlithic_flag,-1,-1;h_densic_flag "h_densic_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_densic_flag,-1,-1;h_duripan_flag "h_duripan_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_duripan_flag,-1,-1;h_petrocalic_flag "h_petrocalic_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_petrocalic_flag,-1,-1;h_petrogypsic_flag "h_petrogypsic_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_petrogypsic_flag,-1,-1;h_petro_flag "h_petro_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_petro_flag,-1,-1;h_salt_flag "h_salt_flag" true true false 4 Long 0 0,First,#,Sandy ESG,h_salt_flag,-1,-1;slope_r "slope_r" true true false 8 Double 0 0,First,#,Sandy ESG,slope_r,-1,-1;hydgrp "hydgrp" true true false 3 Text 0 0,First,#,Sandy ESG,hydgrp,0,3;taxmoistcl "taxmoistcl" true true false 15 Text 0 0,First,#,Sandy ESG,taxmoistcl,0,15;taxmoistscl "taxmoistscl" true true false 15 Text 0 0,First,#,Sandy ESG,taxmoistscl,0,15;soil_moisture_class "soil_moisture_class" true true false 15 Text 0 0,First,#,Sandy ESG,soil_moisture_class,0,15;flood_freq "flood_freq" true true false 17 Text 0 0,First,#,Sandy ESG,flood_freq,0,17;flood_dur "flood_dur" true true false 47 Text 0 0,First,#,Sandy ESG,flood_dur,0,47;flooding_january "flooding_january" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_january,0,13;flooding_february "flooding_february" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_february,0,13;flooding_march "flooding_march" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_march,0,13;flooding_april "flooding_april" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_april,0,13;flooding_june "flooding_june" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_june,0,13;flooding_july "flooding_july" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_july,0,13;flooding_august "flooding_august" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_august,0,13;flooding_september "flooding_september" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_september,0,13;flooding_october "flooding_october" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_october,0,13;flooding_november "flooding_november" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_november,0,13;flooding_december "flooding_december" true true false 13 Text 0 0,First,#,Sandy ESG,flooding_december,0,13;pond_freq "pond_freq" true true false 10 Text 0 0,First,#,Sandy ESG,pond_freq,0,10;pond_dur "pond_dur" true true false 29 Text 0 0,First,#,Sandy ESG,pond_dur,0,29;ponding_january "ponding_january" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_january,0,13;ponding_february "ponding_february" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_february,0,13;ponding_march "ponding_march" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_march,0,13;ponding_april "ponding_april" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_april,0,13;ponding_may "ponding_may" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_may,0,13;ponding_june "ponding_june" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_june,0,13;ponding_july "ponding_july" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_july,0,13;ponding_august "ponding_august" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_august,0,13;ponding_september "ponding_september" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_september,0,13;ponding_october "ponding_october" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_october,0,13;ponding_november "ponding_november" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_november,0,13;ponding_december "ponding_december" true true false 13 Text 0 0,First,#,Sandy ESG,ponding_december,0,13;taxtempregime "taxtempregime" true true false 15 Text 0 0,First,#,Sandy ESG,taxtempregime,0,15;taxtempcl "taxtempcl" true true false 15 Text 0 0,First,#,Sandy ESG,taxtempcl,0,15;esd_id "esd_id" true true false 11 Text 0 0,First,#,Sandy ESG,esd_id,0,11;esd_name "esd_name" true true false 216 Text 0 0,First,#,Sandy ESG,esd_name,0,216;sum_fragcov_low2 "sum_fragcov_low2" true true false 8 Double 0 0,First,#,Sandy ESG,sum_fragcov_low2,-1,-1;sum_fragcov_rv2 "sum_fragcov_rv2" true true false 8 Double 0 0,First,#,Sandy ESG,sum_fragcov_rv2,-1,-1;sum_fragcov_high2 "sum_fragcov_high2" true true false 8 Double 0 0,First,#,Sandy ESG,sum_fragcov_high2,-1,-1;major_mu_pct_sum "major_mu_pct_sum" true true false 4 Long 0 0,First,#,Sandy ESG,major_mu_pct_sum,-1,-1;adj_comp_pct "adj_comp_pct" true true false 8 Double 0 0,First,#,Sandy ESG,adj_comp_pct,-1,-1;maxec_0_2cm "maxec_0_2cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxec_0_2cm,-1,-1;maxec_2_13cm "maxec_2_13cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxec_2_13cm,-1,-1;maxec_13_50cm "maxec_13_50cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxec_13_50cm,-1,-1;maxsar_0_2cm "maxsar_0_2cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxsar_0_2cm,-1,-1;maxsar_2_13cm "maxsar_2_13cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxsar_2_13cm,-1,-1;maxsar_13_50cm "maxsar_13_50cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxsar_13_50cm,-1,-1;maxcaco3_0_2cm "maxcaco3_0_2cm" true true false 4 Long 0 0,First,#,Sandy ESG,maxcaco3_0_2cm,-1,-1;maxcaco3_2_13cm "maxcaco3_2_13cm" true true false 4 Long 0 0,First,#,Sandy ESG,maxcaco3_2_13cm,-1,-1;maxcaco3_13_50cm "maxcaco3_13_50cm" true true false 4 Long 0 0,First,#,Sandy ESG,maxcaco3_13_50cm,-1,-1;maxgypsum_0_2cm "maxgypsum_0_2cm" true true false 4 Long 0 0,First,#,Sandy ESG,maxgypsum_0_2cm,-1,-1;maxgypsum_2_13cm "maxgypsum_2_13cm" true true false 4 Long 0 0,First,#,Sandy ESG,maxgypsum_2_13cm,-1,-1;maxgypsum_13_50cm "maxgypsum_13_50cm" true true false 4 Long 0 0,First,#,Sandy ESG,maxgypsum_13_50cm,-1,-1;maxph1to1h2o_0_15cm "maxph1to1h2o_0_15cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxph1to1h2o_0_15cm,-1,-1;minph1to1h2o_0_15cm "minph1to1h2o_0_15cm" true true false 8 Double 0 0,First,#,Sandy ESG,minph1to1h2o_0_15cm,-1,-1;maxph01mcacl2_0_15cm "maxph01mcacl2_0_15cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxph01mcacl2_0_15cm,-1,-1;minph01mcacl2_0_15cm "minph01mcacl2_0_15cm" true true false 8 Double 0 0,First,#,Sandy ESG,minph01mcacl2_0_15cm,-1,-1;maxcec7_0_15cm "maxcec7_0_15cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxcec7_0_15cm,-1,-1;mincec7_0_15cm "mincec7_0_15cm" true true false 8 Double 0 0,First,#,Sandy ESG,mincec7_0_15cm,-1,-1;maxecec_0_15cm "maxecec_0_15cm" true true false 8 Double 0 0,First,#,Sandy ESG,maxecec_0_15cm,-1,-1;minecec_0_15cm "minecec_0_15cm" true true false 8 Double 0 0,First,#,Sandy ESG,minecec_0_15cm,-1,-1;hzname "hzname" true true false 12 Text 0 0,First,#,Sandy ESG,hzname,0,12;hzdept_r "hzdept_r" true true false 4 Long 0 0,First,#,Sandy ESG,hzdept_r,-1,-1;hzdepb_r "hzdepb_r" true true false 4 Long 0 0,First,#,Sandy ESG,hzdepb_r,-1,-1;surf_texture "surf_texture" true true false 27 Text 0 0,First,#,Sandy ESG,surf_texture,0,27;mineral_des "mineral_des" true true false 9 Text 0 0,First,#,Sandy ESG,mineral_des,0,9;surf_om_r "surf_om_r" true true false 8 Double 0 0,First,#,Sandy ESG,surf_om_r,-1,-1;surface_mineral "surface_mineral" true true false 3 Text 0 0,First,#,Sandy ESG,surface_mineral,0,3;awc_r "awc_r" true true false 8 Double 0 0,First,#,Sandy ESG,awc_r,-1,-1;kwfact "kwfact" true true false 8 Double 0 0,First,#,Sandy ESG,kwfact,-1,-1;kffact "kffact" true true false 8 Double 0 0,First,#,Sandy ESG,kffact,-1,-1;surf_tex_modifier "surf_tex_modifier" true true false 23 Text 0 0,First,#,Sandy ESG,surf_tex_modifier,0,23;tex_in_lieu "tex_in_lieu" true true false 4 Text 0 0,First,#,Sandy ESG,tex_in_lieu,0,4;surf_texture_grouping "surf_texture_grouping" true true false 40 Text 0 0,First,#,Sandy ESG,surf_texture_grouping,0,40;min_top_depth "min_top_depth" true true false 4 Long 0 0,First,#,Sandy ESG,min_top_depth,-1,-1;max_bottom_depth "max_bottom_depth" true true false 4 Long 0 0,First,#,Sandy ESG,max_bottom_depth,-1,-1;argillic_horizon_dia "argillic_horizon_dia" true true false 4 Long 0 0,First,#,Sandy ESG,argillic_horizon_dia,-1,-1;albic_horizon_dia "albic_horizon_dia" true true false 4 Long 0 0,First,#,Sandy ESG,albic_horizon_dia,-1,-1;cambic_horizon_dia "cambic_horizon_dia" true true false 4 Long 0 0,First,#,Sandy ESG,cambic_horizon_dia,-1,-1;densic_contact_dia "densic_contact_dia" true true false 4 Long 0 0,First,#,Sandy ESG,densic_contact_dia,-1,-1;duripan_dia "duripan_dia" true true false 4 Long 0 0,First,#,Sandy ESG,duripan_dia,-1,-1;fragipan_dia "fragipan_dia" true true false 4 Long 0 0,First,#,Sandy ESG,fragipan_dia,-1,-1;lithic_contact_dia "lithic_contact_dia" true true false 4 Long 0 0,First,#,Sandy ESG,lithic_contact_dia,-1,-1;oxic_horizon_dia "oxic_horizon_dia" true true false 4 Long 0 0,First,#,Sandy ESG,oxic_horizon_dia,-1,-1;paralithic_contact_dia "paralithic_contact_dia" true true false 4 Long 0 0,First,#,Sandy ESG,paralithic_contact_dia,-1,-1;petro "petro" true true false 4 Long 0 0,First,#,Sandy ESG,petro,-1,-1;spodic_horizon_dia "spodic_horizon_dia" true true false 4 Long 0 0,First,#,Sandy ESG,spodic_horizon_dia,-1,-1;salic_horizon_diag "salic_horizon_diag" true true false 4 Long 0 0,First,#,Sandy ESG,salic_horizon_diag,-1,-1;diag1 "diag1" true true false 40 Text 0 0,First,#,Sandy ESG,diag1,0,40;diag2 "diag2" true true false 40 Text 0 0,First,#,Sandy ESG,diag2,0,40;diag3 "diag3" true true false 40 Text 0 0,First,#,Sandy ESG,diag3,0,40;densic_bedrock_rest "densic_bedrock_rest" true true false 4 Long 0 0,First,#,Sandy ESG,densic_bedrock_rest,-1,-1;lithic_bedrock_rest "lithic_bedrock_rest" true true false 4 Long 0 0,First,#,Sandy ESG,lithic_bedrock_rest,-1,-1;paralithic_bedrock_rest "paralithic_bedrock_rest" true true false 4 Long 0 0,First,#,Sandy ESG,paralithic_bedrock_rest,-1,-1;cemented_horizon_rest "cemented_horizon_rest" true true false 4 Long 0 0,First,#,Sandy ESG,cemented_horizon_rest,-1,-1;duripan_rest "duripan_rest" true true false 4 Long 0 0,First,#,Sandy ESG,duripan_rest,-1,-1;fragipan_rest "fragipan_rest" true true false 4 Long 0 0,First,#,Sandy ESG,fragipan_rest,-1,-1;manufactured_layer_rest "manufactured_layer_rest" true true false 4 Long 0 0,First,#,Sandy ESG,manufactured_layer_rest,-1,-1;petrocalcic_rest "petrocalcic_rest" true true false 4 Long 0 0,First,#,Sandy ESG,petrocalcic_rest,-1,-1;petroferric_rest "petroferric_rest" true true false 4 Long 0 0,First,#,Sandy ESG,petroferric_rest,-1,-1;petrogypsic_rest "petrogypsic_rest" true true false 4 Long 0 0,First,#,Sandy ESG,petrogypsic_rest,-1,-1;thoriz_gravel "thoriz_gravel" true true false 4 Long 0 0,First,#,Sandy ESG,thoriz_gravel,-1,-1;thoriz_cobbles "thoriz_cobbles" true true false 4 Long 0 0,First,#,Sandy ESG,thoriz_cobbles,-1,-1;thoriz_stones_and_boulders "thoriz_stones_and_boulders" true true false 4 Long 0 0,First,#,Sandy ESG,thoriz_stones_and_boulders,-1,-1;thoriz_para "thoriz_para" true true false 4 Long 0 0,First,#,Sandy ESG,thoriz_para,-1,-1;thoriz_channers_and_flagst "thoriz_channers_and_flagst" true true false 4 Long 0 0,First,#,Sandy ESG,thoriz_channers_and_flagst,-1,-1;thoriz_total_frags "thoriz_total_frags" true true false 4 Long 0 0,First,#,Sandy ESG,thoriz_total_frags,-1,-1;aws150cm "aws150cm" true true false 8 Double 0 0,First,#,Sandy ESG,aws150cm,-1,-1;aws_0_20cm "aws_0_20cm" true true false 8 Double 0 0,First,#,Sandy ESG,aws_0_20cm,-1,-1;aws_20_50cm "aws_20_50cm" true true false 8 Double 0 0,First,#,Sandy ESG,aws_20_50cm,-1,-1;aws_50_100cm "aws_50_100cm" true true false 8 Double 0 0,First,#,Sandy ESG,aws_50_100cm,-1,-1;profile_depth "profile_depth" true true false 4 Long 0 0,First,#,Sandy ESG,profile_depth,-1,-1;dom_comp_flag "dom_comp_flag" true true false 3 Text 0 0,First,#,Sandy ESG,dom_comp_flag,0,3;majcompflag "majcompflag" true true false 3 Text 0 0,First,#,Sandy ESG,majcompflag,0,3;datestamp "datestamp" true true false 14 Text 0 0,First,#,Sandy ESG,datestamp,0,14;diag_combined "diag_combined" true true false 84 Text 0 0,First,#,Sandy ESG,diag_combined,0,84;geom_Length "geom_Length" false true true 8 Double 0 0,First,#,Sandy ESG,geom_Length,-1,-1;geom_Area "geom_Area" false true true 8 Double 0 0,First,#,Sandy ESG,geom_Area,-1,-1" #</Process><Process ToolSource="c:\program files (x86)\arcgis\desktop10.6\ArcToolbox\Toolboxes\Data Management Tools.tbx\Dissolve" Date="20231130" Time="124208">Dissolve SandyESG "C:\Users\samccord\OneDrive - USDA\Documents\Presentations\SRM\2024\RinRangelands\Part2\MapLayers\SandyESG.shp" areasymbol # MULTI_PART DISSOLVE_LINES</Process></lineage><itemProps><itemName Sync="TRUE">SandyESG</itemName><imsContentType Sync="TRUE">002</imsContentType><itemLocation><linkage Sync="TRUE">file://\\ARSNMLAS5SARAHM\C$\Users\samccord\OneDrive - USDA\Documents\Presentations\SRM\2024\RinRangelands\Part2\MapLayers\SandyESG.shp</linkage><protocol Sync="TRUE">Local Area Network</protocol></itemLocation><itemSize Sync="TRUE">0.000</itemSize></itemProps><coordRef><type Sync="TRUE">Projected</type><geogcsn Sync="TRUE">GCS_WGS_1984</geogcsn><csUnits Sync="TRUE">Linear Unit: Meter (1.000000)</csUnits><projcsn Sync="TRUE">WGS_1984_Web_Mercator_Auxiliary_Sphere</projcsn><peXml Sync="TRUE">&lt;ProjectedCoordinateSystem xsi:type='typens:ProjectedCoordinateSystem' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xs='http://www.w3.org/2001/XMLSchema' xmlns:typens='http://www.esri.com/schemas/ArcGIS/10.6'&gt;&lt;WKT&gt;PROJCS[&amp;quot;WGS_1984_Web_Mercator_Auxiliary_Sphere&amp;quot;,GEOGCS[&amp;quot;GCS_WGS_1984&amp;quot;,DATUM[&amp;quot;D_WGS_1984&amp;quot;,SPHEROID[&amp;quot;WGS_1984&amp;quot;,6378137.0,298.257223563]],PRIMEM[&amp;quot;Greenwich&amp;quot;,0.0],UNIT[&amp;quot;Degree&amp;quot;,0.0174532925199433]],PROJECTION[&amp;quot;Mercator_Auxiliary_Sphere&amp;quot;],PARAMETER[&amp;quot;False_Easting&amp;quot;,0.0],PARAMETER[&amp;quot;False_Northing&amp;quot;,0.0],PARAMETER[&amp;quot;Central_Meridian&amp;quot;,0.0],PARAMETER[&amp;quot;Standard_Parallel_1&amp;quot;,0.0],PARAMETER[&amp;quot;Auxiliary_Sphere_Type&amp;quot;,0.0],UNIT[&amp;quot;Meter&amp;quot;,1.0],AUTHORITY[&amp;quot;EPSG&amp;quot;,3857]]&lt;/WKT&gt;&lt;XOrigin&gt;-20037700&lt;/XOrigin&gt;&lt;YOrigin&gt;-30241100&lt;/YOrigin&gt;&lt;XYScale&gt;148923141.92838538&lt;/XYScale&gt;&lt;ZOrigin&gt;-100000&lt;/ZOrigin&gt;&lt;ZScale&gt;10000&lt;/ZScale&gt;&lt;MOrigin&gt;-100000&lt;/MOrigin&gt;&lt;MScale&gt;10000&lt;/MScale&gt;&lt;XYTolerance&gt;0.001&lt;/XYTolerance&gt;&lt;ZTolerance&gt;0.001&lt;/ZTolerance&gt;&lt;MTolerance&gt;0.001&lt;/MTolerance&gt;&lt;HighPrecision&gt;true&lt;/HighPrecision&gt;&lt;WKID&gt;102100&lt;/WKID&gt;&lt;LatestWKID&gt;3857&lt;/LatestWKID&gt;&lt;/ProjectedCoordinateSystem&gt;</peXml></coordRef></DataProperties><SyncDate>20231130</SyncDate><SyncTime>12420300</SyncTime><ModDate>20231130</ModDate><ModTime>12420300</ModTime></Esri><dataIdInfo><envirDesc Sync="TRUE"> Version 6.2 (Build 9200) ; Esri ArcGIS 10.6.1.9270</envirDesc><dataLang><languageCode value="eng" Sync="TRUE"></languageCode><countryCode value="USA" Sync="TRUE"></countryCode></dataLang><idCitation><resTitle Sync="TRUE">SandyESG</resTitle><presForm><PresFormCd value="005" Sync="TRUE"></PresFormCd></presForm></idCitation><spatRpType><SpatRepTypCd value="001" Sync="TRUE"></SpatRepTypCd></spatRpType></dataIdInfo><mdLang><languageCode value="eng" Sync="TRUE"></languageCode><countryCode value="USA" Sync="TRUE"></countryCode></mdLang><distInfo><distFormat><formatName Sync="TRUE">Shapefile</formatName></distFormat><distTranOps><transSize Sync="TRUE">0.000</transSize></distTranOps></distInfo><mdHrLv><ScopeCd value="005" Sync="TRUE"></ScopeCd></mdHrLv><mdHrLvName Sync="TRUE">dataset</mdHrLvName><refSysInfo><RefSystem><refSysID><identCode code="3857" Sync="TRUE"></identCode><idCodeSpace Sync="TRUE">EPSG</idCodeSpace><idVersion Sync="TRUE">8.8(9.3.1.2)</idVersion></refSysID></RefSystem></refSysInfo><spatRepInfo><VectSpatRep><geometObjs Name="SandyESG"><geoObjTyp><GeoObjTypCd value="002" Sync="TRUE"></GeoObjTypCd></geoObjTyp><geoObjCnt Sync="TRUE">0</geoObjCnt></geometObjs><topLvl><TopoLevCd value="001" Sync="TRUE"></TopoLevCd></topLvl></VectSpatRep></spatRepInfo><spdoinfo><ptvctinf><esriterm Name="SandyESG"><efeatyp Sync="TRUE">Simple</efeatyp><efeageom code="4" Sync="TRUE"></efeageom><esritopo Sync="TRUE">FALSE</esritopo><efeacnt Sync="TRUE">0</efeacnt><spindex Sync="TRUE">FALSE</spindex><linrefer Sync="TRUE">FALSE</linrefer></esriterm></ptvctinf></spdoinfo><eainfo><detailed Name="SandyESG"><enttyp><enttypl Sync="TRUE">SandyESG</enttypl><enttypt Sync="TRUE">Feature Class</enttypt><enttypc Sync="TRUE">0</enttypc></enttyp><attr><attrlabl Sync="TRUE">FID</attrlabl><attalias Sync="TRUE">FID</attalias><attrtype Sync="TRUE">OID</attrtype><attwidth Sync="TRUE">4</attwidth><atprecis Sync="TRUE">0</atprecis><attscale Sync="TRUE">0</attscale><attrdef Sync="TRUE">Internal feature number.</attrdef><attrdefs Sync="TRUE">Esri</attrdefs><attrdomv><udom Sync="TRUE">Sequential unique whole numbers that are automatically generated.</udom></attrdomv></attr><attr><attrlabl Sync="TRUE">Shape</attrlabl><attalias Sync="TRUE">Shape</attalias><attrtype Sync="TRUE">Geometry</attrtype><attwidth Sync="TRUE">0</attwidth><atprecis Sync="TRUE">0</atprecis><attscale Sync="TRUE">0</attscale><attrdef Sync="TRUE">Feature geometry.</attrdef><attrdefs Sync="TRUE">Esri</attrdefs><attrdomv><udom Sync="TRUE">Coordinates defining the features.</udom></attrdomv></attr><attr><attrlabl Sync="TRUE">areasymbol</attrlabl><attalias Sync="TRUE">areasymbol</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">20</attwidth><atprecis Sync="TRUE">0</atprecis><attscale Sync="TRUE">0</attscale></attr></detailed></eainfo><mdDateSt Sync="TRUE">20231130</mdDateSt></metadata>
