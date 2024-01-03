@@ -1,0 +1,156 @@
+---
+title: "R in Rangelands Wkshp"
+author: "Georgia Harrison, Leah Dreesmann, Claire Tortorelli"
+date: '2024-01-31'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+# Welcome to Putting the R in Rangelands!
+### Access the data and interactive code via [github](https://github.com/Landscape-Data-Commons/RinRangelands)
+
+
+###################################################################################
+# Part 1: Getting started with R
+
+# Before you begin:
+## Install R and RStudio
+As of January 3, 2024, the current R version is 4.3.2 and the current RStudio version is 2023.12.0+369.
+You should download current versions of both these programs and install them on your computer if you haven’t already. You can download R from CRAN and the free version of RStudio from their site.
+
+
+# Why use R? 
+* Free
+* open source, always growing an evolving
+* tons of packages
+* great for data analysis, statistics and data visualization 
+
+# R vs RStudio? 
+* **R** is the software that performs instructions. 
+* **RStudio** is an interface to interact with R.
+
+
+## RStudio
+Let's take a tour through R studio
+* **Console** pane - contains the output
+    push enter to run 
+    for example, run 4 + 4
+      output is in brackets on the next line [8]
+* **Source** pane - for working with scripts you want to save
+    All files end in .R
+    Run section using RUN button, or Ctrl+Enter (or Cmd+Enter for Macs)
+* Also take  look at the environment & files panes. 
+  
+
+# Quick terminology
+* **Package** base R is bare bones. Packages are like apps that other people have made that you can download and use. Some are standard for most R users, others are subject specific
+* **Directory**  The working directory is your home base for this R session.
+* **Environment** your current workspace. This includes any files you have read into R, and data tables you created, etc
+
+
+# What is up with all the hashtags
+```{r}
+## these are comments and notes
+# anything following a hashtag is a comment. This is just text
+# use this for notes within code, troubleshooting 
+```
+
+
+# R scripts vs R Markdown (RMD)? 
+* In regular **R scripts**, outputs are outside of the script: in the console, plots or other windows.  These files end with .R
+* In **R Markdown**, the script is broken into text and code sections, called chunks. You can format the text (hence all the asterisks), and outputs are spit out under code chunks. To run a chunk of code, hit the green triangle in each chunk, or run all chunks using the upper Run arrow. These files end with .Rmd
+
+
+# The Tidyverse
+This workshop will be focused on using tools within the  [tidyverse](https://www.tidyverse.org/) for data manipulation and visualization. The tidyverse is a collection of packages that all play nice with eachother - they have the same philosophy, grammar, and data structures. This allows for fast, efficient workflows in R. 
+The world of R is moving to the tidyverse, and you should too! 
+
+## Packages within the tidyverse: 
+* Importing data (readr)
+* Data manipulation (dplyr, tidyr)
+* Working with data types (stringr for strings, lubridate for date/datetime, forcats for categorical/factors)
+* Data visualization (ggplot2)
+* Data-oriented programming (purrr)
+* Communication (Rmarkdown, shiny)
+
+
+
+# Install packages
+There are a few ways you can install a package:
+
+1) In packages tab, using the install button. Then library a package (aka activate it for that session) by checking the box
+2) Using install.packages("packagename")
+```{r}
+# install.packages("tidyverse") #run this! only once, good practice to run in the console
+```
+**note, only do this once!** 
+After installation, library a package to recall it and have it ready to use during that session
+```{r, message=FALSE, warning = FALSE}
+library(tidyverse)
+```
+### the tidyverse is special because it is actually a family of packages, so this function is actually calling many packages
+
+# Help
+Here are a few of the key ways to get help in R. 
+1. **Help function**: to pull up the documentation for a package or function:
+?package
+?functionname
+
+for example: 
+```{r}
+?readr
+?mutate
+```
+These bring you to **R documentation**, which is always set up in the same way with these sections:
+* Description 
+* Usage
+* Arguments
+* Examples or Details
+
+
+2. **Stack overflow**: R questions and answers
+in most cases, someone else has already asked your question 
+
+There are [cheatsheets](https://posit.co/resources/cheatsheets/) for each tidyverse package (and many other R entities!)
+
+
+
+# Working Directory
+This is where R, by default, will go to look for any datasets you load and is the place R will save files you save. When working on a simple project, I save my R scripts and all files related to that project into a single folder that I set as my working directory. This makes it so I don’t have to write out the whole directory path every time I want to load or save something. This also helps me keep organized.
+
+You can check the current working directory: 
+```{r}
+getwd()
+```
+You can do this with code of with the control panels: 
+Session > set working directory > to source file location >  navigate to your home base folder on your computer
+OR 
+Files pane > More.. > Set working directory
+
+# Let's all set the working directory for this workshop 
+Important: You must either use single forward slashes or double backslashes in the directory path in R instead of the single backslashes. If you work in Windows this will not be what you are used to.
+setwd("C:/Users/Aosmith/R workshops/r-basics-workshop") OR
+setwd("C:\\Users\\Aosmith\\R workshops\\r-basics-workshop")
+```{r}
+setwd("C:\\Users\\harr4718\\OneDrive - University of Idaho\\R code (copies)\\SRM R workshop\\DemoData")
+#customize to your own file path
+```
+
+
+
+# Read in the data
+let's get started actually working with the data 
+First step is to import the data using readr (a package within the tidyverse) 
+using the *read_csv()* function 
+These data were obtained from the Landscape Data Commons, which we will talk about more in Part 2
+```{r}
+starter_data = read_csv("Part1/RinRange_Pt1Data.csv")
+
+```
+
+
+
+###################################################################################
+\newpage
