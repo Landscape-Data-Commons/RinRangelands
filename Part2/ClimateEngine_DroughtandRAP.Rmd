@@ -1,0 +1,217 @@
+---
+title: "R in Rangelands Climate Engine"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse) # Data processing and visualization
+library(httr) # HTTP API requests
+library(httr2) # HTTP API requests
+library(DT) # Formatting data tables
+library(sf) # Importing shapefile
+library(mapview) # Visualizing shapefile
+library(geojsonsf)
+```
+
+## Authenticate to API and run preliminary test
+
+Define Climate Engine API key and run simple endpoint to get key expiration to ensure that the key authenticated correctly:
+
+```{r}
+# Define root url for Climate Engine API
+root_url <- "https://api.climateengine.org/"
+
+# Define key
+key = readLines('ce_key.txt')
+
+# Define endpoint
+endpoint = '/home/key_expiration'
+
+# Run simple endpoint to get key expiration
+test_r <- GET(paste0(root_url, endpoint), config = add_headers(Authorization = key))
+print(content(test_r, "text",  encoding = "ISO-8859-1"))
+
+# Clean up unneeded objects
+rm(test_r, endpoint)
+```
+
+## Import the wind erosion area of interest
+
+This is a sample AOI in southern New Mexico, but you can run similar analysis for any shapefile. We will import the shapefile as an sf object (and upload it to Google Earth Engine) and visualize them on a leaflet map using the mapview package. You can also modify which area of interest you want to analyze in this code chunk.
+
+```{r}
+# Import the field boundaries shapefile and select an individual area of interest. 
+aoi <- st_read('MapLayers/SandyESG.shp') %>%
+  slice(4) %>%
+  st_simplify(preserveTopology = TRUE, dTolerance = 10) %>% 
+  st_transform(crs = "OGC:CRS84") 
+
+aoi_name = aoi$areasymbol %>% unlist()
+
+# Visualize the allotments on a leaflet map using mapview package
+mapview(aoi)
+```
+
+## Make API requests to get Rangeland Analysis Platform (RAP) fractional vegetation cover data for annual forbs and grasses (AFG), perennial forbs and grasses (PFG), shrubs (SHR), trees
+
+Here we will iterate over a list of vegetation types to get an annual timeseries of vegetation cover for our area of interest. There are a few helper functions included here to clean up the data returned from the API. Requests are sent to the API in the JSON format and the resulting data is returned in the JSON format, so the helper functions translate the JSON into an R dataframe.
+
+```{r}
+# Define dataset for function below
+# Documentation on the Rangeland Analysis Platform is available through rangelands.app
+# API Documentation on the Rangeland Analysis Platform: https://docs.climateengine.org/docs/build/html/variables.html#rst-rap-vegetation-cover
+dataset = "RAP_COVER"
+
+# Make a list of ET Model options — we will loop over these using the function below to return all of the data
+variables <- c('AFG', 'PFG', 'SHR', 'TRE', 'BGR')
+
+# Function to return data frame of OpenET time-series
+get_rap_df <- function(variable){
+  
+  print(paste0("Requesting data for ", variable))
+  
+  # Define Climate Engine API Point 
+  # Documentation for this endpoint found here: https://docs.climateengine.org/docs/build/html/timeseries.html#rst-timeseries-native-custom-asset
+  endpoint <- 'timeseries/native/custom_asset'
+  
+  # Create list of API parameters for request
+  params = list(
+    dataset = dataset,
+    variable = variable,
+    start_date = '2000-01-01',
+    end_date = '2022-12-31',
+    area_reducer = 'mean',
+    asset_id = 'users/EricRJensen-DRI/SandyESG',
+    sub_choices = paste0('["', aoi_name, '"]'),
+    filter_by = 'areasymbol')
+
+  # Make API request
+  data_json <- GET(paste0(root_url, endpoint), config = add_headers(Authorization = key), query = params)
+
+  # Parse the JSON returned from API to prepare dataframe
+  data_json_parse <- content(data_json, "parsed")
+  data_df <- enframe(unlist(data_json_parse[[1]]$Data))
+  data_cols <- data_df$name %>% unique()
+
+  # Function to iterate over "name" values in parsed dataframe and return single column dataframe with those values
+  generate_data_frame <- function(col, df){
+  
+    # Filter for name from parsed API return
+    df_val <- df %>%
+      filter(name == col)
+  
+    # Create output data frame based on name from parsed API return
+    out_df <- tibble(val = df_val$value)
+  
+    # Provide names from parsed API return as column name
+    colnames(out_df) <- c(col)
+  
+    return(out_df)
+  }
+
+  # Map generate_data_frame over list of columns and clean up resulting data frame
+  variable_r_df <- map(data_cols, generate_data_frame, data_df) %>%
+    bind_cols() %>%
+    mutate(Date = as.Date(Date),
+           Value = as.numeric(.[[2]]),
+           Variable = paste0(variable)) %>%
+    filter(Value > -10) %>%
+    select(-2)
+  
+  return(variable_r_df)
+}
+
+# Map OpenET API function over list of models to get timeseries from all models
+rap_df <- map(variables, get_rap_df) %>%
+  bind_rows() # Combine list of dataframes into an individual dataframe
+datatable(rap_df)
+```
+
+## Make API requests to get Rangeland Analysis Platform (RAP) fractional vegetation cover data for annual forbs and grasses (AFG), perennial forbs and grasses (PFG), shrubs (SHR), trees
+
+Make simple plots of the RAP time-series data, similar to the RAP web application
+
+```{r}
+# Make a simple plot of the time-series data
+ggplot(data = rap_df)+
+  geom_line(mapping = aes(x = Date, y = Value, color = Variable))+
+  labs(title = paste0('RAP Cover for ', aoi_name), y = 'Fractional cover (%)') +
+  scale_colour_manual(values = c('AFG' = "#F8766D", 'BGR' = "#B79F00", 'PFG' = "#00BA38", 'TRE' = "#00BFC4", 'SHR' = "#619CFF"), labels = c("AFG", "BGR", "PFG", "TRE", "SHR"))+
+  theme_minimal()+
+  theme(legend.position="bottom",
+        axis.title.x = element_blank(),
+        legend.title=element_blank())
+```
+
+
+## Get 180-day Standardized Precipitation-Evapotranspiration Index (SPEI) data from gridMET Drought.
+
+Here, we will get histograms of 180-day SPEI drought data based on accepted drought categories developed by NOAA NIDIS (drought.gov). This will allow us to make a beautiful stacked bar chart to depict the drought history for our AOI. You can learn more about drought indicators and how the Climate Engine team is helping the BLM to assess drought on our support site: https://support.climateengine.org/article/128-rangeland-drought-assessment
+
+```{r}
+# Define Climate Engine API Point 
+# Documentation for this endpoint found here: https://docs.climateengine.org/docs/build/html/zonal_statistics.html#rst-zonal-stats-pixel-count-custom-asset
+endpoint <- 'zonal_stats/pixel_count/custom_asset'
+
+# Documentation on the gridMET Drought is available here: https://support.climateengine.org/article/45-gridmet-drought
+# API Documentation on the Rangeland Analysis Platform: https://docs.climateengine.org/docs/build/html/variables.html#rst-gridmet-drought
+dataset <- 'GRIDMET_DROUGHT'
+variable <- 'spei180d'
+
+# Get date list to iterate over
+yearlist = seq(from = 2000, to = 2004, by = 1)
+
+generate_date_seq <- function(year){
+  date_seq_year <- seq(from = as.Date(paste0(as.character(year), "/1/5")), to = as.Date(paste0(as.character(year), "/12/31")), by = '5 days')
+  return(c(as.character(date_seq_year)))
+}
+
+date_seq <- map(yearlist, generate_date_seq)
+date_seq %>% flatten_chr()
+
+# Generate dataframe of histograms
+all_df <- tibble()
+get_drought_histogram <- function(date_in){
+  
+  print(paste0('Running ', date_in))
+        
+  # Create list of API parameters for request
+  params = list(
+    dataset = dataset,
+    variable = variable,
+    end_date = date_in,
+    area_reducer = 'mean',
+    asset_id = 'users/EricRJensen-DRI/SandyESG',
+    sub_choices = paste0('["', aoi_name, '"]'),
+    filter_by = 'areasymbol')
+  
+  # Make API request
+  variable_r <- GET(paste0(root_url, endpoint), config = add_headers(Authorization = key), query = params)
+  
+  # Parse JSON returned from API
+  variable_r_parse <- content(variable_r, "parsed")
+  
+  # Generate dataframe of histogram for date
+  date_out = variable_r_parse[[1]]$Date
+  print(date_out)
+  bin_length = length(variable_r_parse[[1]]$spei180d)
+  print(bin_length)
+  row_df <- tibble('Date' = date_out)
+  print(row_df)
+  for (i in seq(1, bin_length, 1)){
+    print('i',i)
+    bin = as.character(i)
+    val = variable_r_parse[[1]]$spei180d[i][[1]]
+    df = tibble(bin = val)
+    names(df) <- bin
+    row_df = bind_cols(row_df, df)}
+    
+  print(row_df)
+}
+
+get_drought_histogram(date_seq[1])
+
+```
+
+
+
