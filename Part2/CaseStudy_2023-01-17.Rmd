@@ -30,7 +30,6 @@ Now we need to pull in some polygons for our region of interest so that we can s
 ```{r}
 # get polygons
 chihuahuan_desert <- read_sf("MapLayers/ChihuahuanDesert.shp")
-nm <- read_sf("MapLayers/NewMexico_Albers.shp")
 sandy_esg <- read_sf("MapLayers/SandyESG.shp")
 
 # extract data from LDC
@@ -87,17 +86,17 @@ sf::st_write(data_sf, "ldc_data.shp", append=F)
 
 ***Potentially drop this section***
 
-For management purposes, we are going to focus on the NM portion of the Chihuahuan Desert.
+For management purposes, we are going to focus on the NM portion of the Chihuahuan Desert and the Sandy Ecological Site Group within that area.
 ``` {r}
 
-#TODO Nelson, could you help me make this intersection work? I think I moved to R because it wasn't going well in R
-#nm_data <- sf::st_read("~/MapLayers/ldc_data_nm_intersect.shp")
-# this is not working ? 
-
+#In ArcGIS we intersected the Sandy Ecological Site group with our data. You can do this  Nelson, could you help me make this intersection work? I think I moved to R because it wasn't going well in R
+#nm_data <- sf::st_read("MapLayers/ldc_data_nm_intersect.shp")
+nm_data <- data_sf |> subset(State == "NM")
 
 # not sure what the intersect data contains that we dont already have in the data_sf...
-nm_data <- data_sf |> dplyr::mutate(NWERN_JER = dplyr::case_when(ProjectKey %in% "NWERN_JER"~ "yes"),
+nm_data <- nm_data |> dplyr::mutate(NWERN_JER = dplyr::case_when(ProjectKey %in% "NWERN_JER"~ "yes"),
                                     Chihuahuan_desert = "yes",
+                                       MLRA42 = dplyr::case_when(mlrarsym %in% "42"~ "yes"),
                                     DateVisited = lubridate::as_date(DateVisited),
                                     Year = lubridate::year(DateVisited) |> as.factor(),
                                     # benchmark points
@@ -116,19 +115,24 @@ nm_data <- data_sf |> dplyr::mutate(NWERN_JER = dplyr::case_when(ProjectKey %in%
 #                                                                  )
 
 nm_data_long <- as.data.frame(nm_data) |>
-  tidyr::pivot_longer(cols = c("MLRA42","SandyESG", "NWERN_JER", "Chihuahuan_desert"),
+  tidyr::pivot_longer(cols = c("MLRA42",
+                               #"SandyESG", 
+                               "NWERN_JER", 
+                               "Chihuahuan_desert"),
                       names_to = "region",
                       values_to = "region_membership") |>
   subset(region_membership =="yes")|>
   dplyr::mutate(region = factor(region)|>
                   dplyr::recode( "NWERN_JER" = "Site",
-                                 "SandyESG" = "ESG",
+                                 # "SandyESG" = "ESG", # TODO decide if we want SandyESG or not
                                  "MLRA42" = "MLRA",
                                  "Chihuahuan_desert" = "Ecoregion"))
 
 nm_data_long$region <- factor(nm_data_long$region,
-                              levels = c( "Site", "ESG",
-                                          "MLRA","Ecoregion")
+                              levels = c( "Site", 
+                                          #"ESG",
+                                          "MLRA",
+                                          "Ecoregion")
                               )
 ```
 
@@ -136,12 +140,12 @@ nm_data_long$region <- factor(nm_data_long$region,
 
 ``` {r}
 # box plot
-ggplot(nm_data_long |> subset(bnchmrk== "new" &
+ggplot(nm_data_long |> subset(benchmark== "new" &
                                 Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
-                                TtlFlrC),
+                                TotalFoliarCover),
        aes(x = Year,
-                                                                   y = TtlFlrC,
-                                                                   group = Year)) +
+           y = TotalFoliarCover,
+           group = Year)) +
   facet_grid(rows = "region")+
   geom_boxplot()+
   geom_point(aes(color = evaluated))+
@@ -151,11 +155,11 @@ ggplot(nm_data_long |> subset(bnchmrk== "new" &
   guides(color=guide_legend(title="Benchmark status"))
 
 # bar chart
-ggplot(nm_data_long |> subset(bnchmrk== "new" &
+ggplot(nm_data_long |> subset(benchmark== "new" &
                                 Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
-                                TtlFlrC),
+                                TotalFoliarCover),
        aes(x = Year,
-           y = TtlFlrC,
+           y = TotalFoliarCover,
            fill = evaluated)) +
   facet_grid(rows = "region")+
   geom_bar(position = "fill", stat = "identity")+
@@ -165,10 +169,10 @@ ggplot(nm_data_long |> subset(bnchmrk== "new" &
   guides(fill=guide_legend(title="Benchmark status"))
 
 # summarize
-nm_data_summary <- nm_data_long |> subset(bnchmrk== "new" &
+nm_data_summary <- nm_data_long |> subset(benchmark== "new" &
                          Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
-                         TtlFlrC) |>
-  dplyr::select(PrmryKy, region, Year) |>
+                         TotalFoliarCover) |>
+  dplyr::select(PrimaryKey, region, Year) |>
   dplyr::mutate(Year = as.character(Year)) |>
   dplyr::distinct()|>
   dplyr::group_by(Year, region) |> dplyr::tally()
@@ -176,47 +180,3 @@ nm_data_summary <- nm_data_long |> subset(bnchmrk== "new" &
 
 ## 4. Climate Data/RAP
 
-```{r}
-## get climate data
-# join county area to US Drought Monitor
-county <- read.csv("County_area.csv")
-USDM <- read.csv("USDM_20150101_20221231.csv")
-
-# summarize
-USDM_summary <- USDM |> dplyr::group_by(MapDate) |>
-  dplyr::summarise(
-    None = sum(None),
-    D0 = sum(D0),
-    D1 = sum(D1),
-    D2 = sum(D2),
-    D3 = sum(D3),
-    D4 = sum(D4)
-  )|> tidyr::pivot_longer(cols = c(None:D4),
-                          names_to = "Drought_Category",
-                          values_to = "SQMI") |>
-  dplyr::mutate(Drought_percent = SQMI/58180,
-                MapDate = as.Date(as.character(MapDate),format = "%Y%m%d"))
-
-USDM_extreme <- USDM_summary |> subset(Drought_Category %in% c("D3", "D4"))|>
-  dplyr::group_by(MapDate)
-
-usdm_color <- c("#ffff00", "#fcd37f", "#ffaa00", "#e60000", "#730000") %>% rev()
-usdm_labels <- c("Exceptional", "Extreme", "Severe", "Moderate", "Abnormally Dry")
-
-drought_plot <-ggplot(USDM_summary |> subset(!Drought_Category=="None" &
-                                               MapDate < "2022-12-31"),
-                      aes(x = MapDate, y = Drought_percent, fill = Drought_Category)) +
-  geom_col()+
-  scale_fill_manual(values = usdm_color,
-                    labels = usdm_labels,
-                    name = "Drought category",
-                    guide = guide_legend(reverse = TRUE))+
-  #scale_x_date(date_breaks = "years", date_labels = "%Y")+
-  ylab("Proportion in drought") +
-  xlab ("Year")+
-  scale_x_date(date_breaks = "1 year",date_labels = "%Y")+
-  theme_bw()
-
-drought_plot
-ggsave(drought_plot, filename = "ecoregion_drought.jpg")
-```
