@@ -91,18 +91,29 @@ For management purposes, we are going to focus on the NM portion of the Chihuahu
 ``` {r}
 
 #TODO Nelson, could you help me make this intersection work? I think I moved to R because it wasn't going well in R
-# work with intersected data
-nm_data <- sf::st_read("~/Papers/DataCommons/AEL_submission/R2/Vignette/ldc_data_nm_intersect.shp")
+#nm_data <- sf::st_read("~/MapLayers/ldc_data_nm_intersect.shp")
+# this is not working ? 
 
-nm_data <- nm_data |> dplyr::mutate(NWERN_JER = dplyr::case_when(PrjctKy %in% "NWERN_JER"~ "yes"),
+
+# not sure what the intersect data contains that we dont already have in the data_sf...
+nm_data <- data_sf |> dplyr::mutate(NWERN_JER = dplyr::case_when(ProjectKey %in% "NWERN_JER"~ "yes"),
                                     Chihuahuan_desert = "yes",
-                                    DateVisited = lubridate::as_date(DatVstd),
+                                    DateVisited = lubridate::as_date(DateVisited),
                                     Year = lubridate::year(DateVisited) |> as.factor(),
                                     # benchmark points
-                                    evaluated = dplyr::case_when(TtlFlrC >30 ~ "Meeting",
-                                                                 TtlFlrC <=30 ~ "Not meeting"
-                                                                 )
-)
+                                    evaluated = dplyr::case_when(TotalFoliarCover >30 ~ "Meeting",
+                                                                 TotalFoliarCover <=30 ~ "Not meeting"
+                                                                 ))
+
+# old code: 
+# nm_data <- nm_data |> dplyr::mutate(NWERN_JER = dplyr::case_when(PrjctKy %in% "NWERN_JER"~ "yes"),
+#                                     Chihuahuan_desert = "yes",
+#                                     DateVisited = lubridate::as_date(DatVstd),
+#                                     Year = lubridate::year(DateVisited) |> as.factor(),
+#                                     # benchmark points
+#                                     evaluated = dplyr::case_when(TtlFlrC >30 ~ "Meeting",
+#                                                                  TtlFlrC <=30 ~ "Not meeting"
+#                                                                  )
 
 nm_data_long <- as.data.frame(nm_data) |>
   tidyr::pivot_longer(cols = c("MLRA42","SandyESG", "NWERN_JER", "Chihuahuan_desert"),
