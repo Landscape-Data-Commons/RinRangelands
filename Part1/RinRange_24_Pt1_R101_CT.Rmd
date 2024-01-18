@@ -1,0 +1,609 @@
+---
+title: "R in Rangelands Wkshp"
+author: "Georgia Harrison, Leah Dreesmann, Claire Tortorelli"
+date: '2024-01-31'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+# Welcome to Putting the R in Rangelands!
+### Access the data and interactive code via [github](https://github.com/Landscape-Data-Commons/RinRangelands)
+
+
+###################################################################################
+# Part 1: Getting started with R
+
+# Before you begin:
+## Install R and RStudio
+As of January 3, 2024, the current R version is 4.3.2 and the current RStudio version is 2023.12.0+369.
+You should download current versions of both these programs and install them on your computer if you haven’t already. You can download R from CRAN and the free version of RStudio from their site.
+
+
+# Why use R? 
+* Free
+* open source, always growing an evolving
+* tons of packages
+* great for data analysis, statistics and data visualization 
+
+# R vs RStudio? 
+* **R** is the software that performs instructions. 
+* **RStudio** is an interface to interact with R.
+
+
+## RStudio
+Let's take a tour through R studio
+* **Console** pane - contains the output
+    push enter to run 
+    for example, run 4 + 4
+      output is in brackets on the next line [8]
+* **Source** pane - for working with scripts you want to save
+    All files end in .R
+    Run section using RUN button, or Ctrl+Enter (or Cmd+Enter for Macs)
+* Also take  look at the environment & files panes. 
+  
+
+# Quick terminology
+* **Package** base R is bare bones. Packages are like apps that other people have made that you can download and use. Some are standard for most R users, others are subject specific
+* **Directory**  The working directory is your home base for this R session.
+* **Environment** your current workspace. This includes any files you have read into R, and data tables you created, etc
+
+
+# What is up with all the hashtags
+```{r}
+## these are comments and notes
+# anything following a hashtag is a comment. This is just text
+# use this for notes within code, troubleshooting 
+```
+
+
+# R scripts vs R Markdown (RMD)? 
+* In regular **R scripts**, outputs are outside of the script: in the console, plots or other windows.  These files end with .R
+* In **R Markdown**, the script is broken into text and code sections, called chunks. You can format the text (hence all the asterisks), and outputs are spit out under code chunks. To run a chunk of code, hit the green triangle in each chunk, or run all chunks using the upper Run arrow. These files end with .Rmd
+
+
+# The Tidyverse
+This workshop will be focused on using tools within the  [tidyverse](https://www.tidyverse.org/) for data manipulation and visualization. The tidyverse is a collection of packages that all play nice with eachother - they have the same philosophy, grammar, and data structures. This allows for fast, efficient workflows in R. 
+The world of R is moving to the tidyverse, and you should too! 
+
+## Packages within the tidyverse: 
+* Importing data (readr)
+* Data manipulation (dplyr, tidyr)
+* Working with data types (stringr for strings, lubridate for date/datetime, forcats for categorical/factors)
+* Data visualization (ggplot2)
+* Data-oriented programming (purrr)
+* Communication (Rmarkdown, shiny)
+
+
+
+# Install packages
+There are a few ways you can install a package:
+
+1) In packages tab, using the install button. Then library a package (aka activate it for that session) by checking the box
+2) Using install.packages("packagename")
+```{r}
+# install.packages("tidyverse") #run this! only once, good practice to run in the console
+```
+**note, only do this once!** 
+After installation, library a package to recall it and have it ready to use during that session
+```{r, message=FALSE, warning = FALSE}
+library(tidyverse)
+```
+### the tidyverse is special because it is actually a family of packages, so this function is actually calling many packages
+
+# Help
+Here are a few of the key ways to get help in R. 
+1. **Help function**: to pull up the documentation for a package or function:
+?package
+?functionname
+
+for example: 
+```{r}
+?readr
+?mutate
+```
+These bring you to **R documentation**, which is always set up in the same way with these sections:
+* Description 
+* Usage
+* Arguments
+* Examples or Details
+
+
+2. **Stack overflow**: R questions and answers
+in most cases, someone else has already asked your question 
+
+There are [cheatsheets](https://posit.co/resources/cheatsheets/) for each tidyverse package (and many other R entities!)
+
+
+
+# Working Directory
+This is where R, by default, will go to look for any datasets you load and is the place R will save files you save. When working on a simple project, I save my R scripts and all files related to that project into a single folder that I set as my working directory. This makes it so I don’t have to write out the whole directory path every time I want to load or save something. This also helps me keep organized.
+
+You can check the current working directory: 
+```{r}
+getwd()
+```
+You can do this with code of with the control panels: 
+Session > set working directory > to source file location >  navigate to your home base folder on your computer
+OR 
+Files pane > More.. > Set working directory
+
+# Let's all set the working directory for this workshop 
+Important: You must either use single forward slashes or double backslashes in the directory path in R instead of the single backslashes. If you work in Windows this will not be what you are used to.
+setwd("C:/Users/Aosmith/R workshops/r-basics-workshop") OR
+setwd("C:\\Users\\Aosmith\\R workshops\\r-basics-workshop")
+```{r}
+setwd("C:/Users/Leah/OneDrive - University of Idaho/Other/Tidyverse_workshop/2024")
+#customize to your own file path
+
+```
+
+
+
+# Read in the data
+let's get started actually working with the data 
+First step is to import the data using readr (a package within the tidyverse) 
+using the *read_csv()* function 
+These data were obtained from the Landscape Data Commons, which we will talk about more in Part 2 
+#### Georgia maybe add a little discussion of the climate data in here too ####
+```{r}
+indicator_data = read_csv("RinRange_newID_indicator.csv")
+climate_data = read_csv("RinRange_Pt1Data_climate_mlra42.csv")
+```
+
+
+###################################################################################
+\newpage
+# Part 2: Cleaning Data
+
+## Take a peek at our data
+The **head** function allows you to view the first 6 rows of data. Toggle the arrow to see all of the columns. 
+The **view** function opens the data in another tab to see all entries. 
+```{r}
+head(indicator_data)
+view(indicator_data)
+
+head(climate_data)
+view(climate_data)
+```
+At first glance we have a lot of data, both in columns and rows! The data also appears to be slightly incomplete with lots of NA values and 0's. We also should notice that the climate data is a description for several Ecological Sites not the individual plots of our indicator data. Eventually we will want to join these two data sets based on the ecological site. Let's get this data in a format we can easily join the two, be more user friendly, and is set up for further analysis and graphing.
+
+  
+After a data set has been loaded into RStudio, the next step is getting it ready for analysis. The tidyverse has many functions in the **tidyr** and **dplyr** packages which allow you to tidy and transform your data set so you can use it for analysis.   
+  
+  
+# Manipulating Columns  
+  
+One of the most basic things we may want to do is change something about the columns in our data sets. We may want to choose only a subset of the variables, change a variable that we already have in our data set, or add a new variable to our data set.  
+  
+## Subsetting Variables  
+  
+To choose a subset of variables we can use the select() function. In tidyverse, there are many ways you can specify what columns you want to keep in your new data set. A few of the most useful ones are explicitly writing out the column names, specifying the position of the columns in the tibble you're interested in, or using a range of 'selection helpers' that help you identify patterns in the column names (https://dplyr.tidyverse.org/reference/select.html). 
+
+For the indicator data, we have so much information and we aren't interested in all of it! We can narrow it down to a few indicators of interest. Here I selected the meta data about the plot, all hit line point intercept cover indicator data, and height indicator data.
+```{r}
+indicator_data = indicator_data %>% select(PrimaryKey, DBKey, DateVisited, corrected_ecosite_id,8:9, 14:15, starts_with("AH"), starts_with("Hgt"))
+```
+
+For the climate data, we noticed some columns that are almost entirely NA values. There is no information added and just makes it harder to look at the data. Let's remove those columns.
+```{r}
+climate_data = climate_data %>% select(-c(5:9))
+head(climate_data)
+```
+ 
+  
+## Changing or adding variables  
+To change or add variables we can use the following functions:  
+* mutate(): adds the new variable onto the end of existing tibble. 
+* transmute(): adds only the specified variables to the tibble. 
+  
+There are many different uses of these functions and a few key situations you may run across are described here.  
+  
+### Data Types   
+  
+Data is stored as different types in R tibbles. There are many different types we may be interested in (https://tibble.tidyverse.org/articles/types.html). Here are a few of the more important ones:  
+* Logical (lgl): TRUE or FALSE  
+* Double (dbl): all real numbers (with or without decimal places)  
+* Character (chr): strings (we would code these in "")  
+* Factor (fct): vector with set not ordered numeric codes to predefined character valued levels  
+* Date (date): date variable  
+  
+There are many ways we can figure out how R is storing each variable including the output when first loading in data, the drop down arrow in the environment, the table from the function head() output, and the glimpse() function.  
+
+Sometimes R does not correctly guess what type of data you have, so we need to change it to avoid our analysis getting messed up. We can use the mutate() or transmute() function to change variable types in combination with data type changing functions a few are here:  
+* logical: as.logical()  
+* double: as.numerical()  
+* character: as.character()  
+* factor: as.factor()  
+* date: as.Date()  
+
+One thing I noticed while looking at the indicator data, is that the date is not represented as a date. Here is an example of using mutate() to change it. In the tibble below you can now clearly see 'DateVisited' is a 'date'.
+```{r}
+indicator_data = indicator_data %>% mutate(DateVisited = as.Date(DateVisited))
+head(indicator_data)
+```
+
+### Adding Variables  
+  
+Another common use of these functions is to add new column. We can add a new variable of a constant or derived from the other columns.  
+Perhaps we are interested in just knowing the year each plot was visited, in addition to the specific date. Here we use mutate and the function year() which is part of the lubridate package within tidyverse. We also change Year to a factor instead of a number. 
+```{r}
+indicator_data = indicator_data %>% mutate(Year = as.factor(year(DateVisited)))
+head(indicator_data)
+```
+
+
+# Manipulating Rows  
+  
+Sometimes we want to change something about the rows, like rearranging them in the tibble or subsetting to only rows with specific values.  
+  
+## Arranging Rows  
+  
+We can use the function arrange() to change the order of the rows based on specific values.  
+
+In this example, we can arrange our rows by year, , then by bare soil cover.  
+```{r}
+indicator_data = indicator_data %>% arrange(Year, BareSoilCover)
+```
+  
+## Subsetting rows  
+We can use the function filter() to subset the rows based on specific values. 
+  
+You can filter by any of the different data types and can use many different comparison operators:  
+>, >= (greater than)  
+<, <= (less than)  
+!= (not equal)  
+== (equal)  
+  
+You can also multiple combinations using Boolean operators:  
+& (and)  
+| (or)  
+! (not)  
+  
+Here is a basic type of this filtering. 
+```{r}
+indicator_filter = indicator_data %>% filter(Year == 2011 & BareSoilCover >= 50)
+view(indicator_filter)
+```
+
+# Dealing with NA values  
+  
+If you have NA values in your data set it is important to carefully consider what they mean before you do anything with them. Are the NA values signifying true missing information? Are they actually signifying a 0? Do you only have a few NA's and removal of those observations won't impact analysis? Do you have a lot of NA's and you need to figure out a way to deal with them?   
+If you are dealing with a data set with NA values, you should [spend more time looking into this topic] (https://towardsdatascience.com/data-cleaning-with-r-and-the-tidyverse-detecting-missing-values-ea23c519bc62)
+
+
+In the indicator data, there are many examples sprinkled throughout. Let say we are interested in further exploring Woody_Height later. We may want to know if there are any NA values in this column. To check this we can use the code. 
+##lets change the variable we use here to one that Claire wants to use in the graphs##
+```{r}
+WoodyHeight_NA_Rows = indicator_data %>% filter(is.na(Hgt_Woody_Avg))
+```
+  
+From my knowledge of how this data set, I know that these NA's actually signify 0 values because there was no Woody species at the plot.
+
+With this knowledge we now want to replace the NA values with 0's. 
+```{r}
+indicator_data = indicator_data %>% mutate(Hgt_Herbaceous_Avg = replace(Hgt_Herbaceous_Avg, is.na(Hgt_Herbaceous_Avg), 0))
+```
+
+
+    
+# Tidy Data  
+  
+It is important to have tidy data to work with. Tidy data sets meet three interrelated rules:  
+1. Each variable must have its own column  
+2. Each observation must have its own row  
+3. Each value must have its own cell  
+  
+Our indicator_data does meet these rules because each variable has its own column, all observations have its own row, and each value has its own cell. However, our climate_data does not meet these rules because observation of interest (Ecological Site ID) has multiple rows and each variable of interest (Property) has only one column. To make this tidy data we want to create a wide data set so that there is columns for each of the properties associated with each ecological site (mean annual precipitation, frost free days, and freeze free days). We do this with the function pivot_wider().
+```{r}
+climate_data = climate_data %>% pivot_wider(names_from = "Property", values_from = "Average")
+```
+  
+To convert the data back to a long data set we use the function pivot_longer().  
+```{r}
+climate_data_long = climate_data %>% pivot_longer(c("mean annual precipitation", "frost free days", "freeze free days"), names_to = "Property", values_to = "Average")%>% distinct()
+```
+
+
+
+# Join data  
+  
+Finally, after all of the previous data manipulation, our two data sets are ready to be joined together. We do this by using mutating joins based on keys in the data. Hopefully the discussion of keys helps to understand some of the data manipulation. 
+  
+## Keys
+  
+Keys are how we uniquely identify observations in tables and allow us to link observations between tables. There are two types of keys:  
+* Primary key: Uniquely identifies an observation in own table
+* Foreign key: Uniquely identifies an observation in another table
+  
+If we are interested in adding the climate data to our indicator data, the Primary Key for our indicator data is "corrected_ecosite_id" and the Foreign Key from the climate data is "Ecological site legacy ID".
+  
+## Mutating Joins  
+  
+The functions we use to join two or more data sets are called joins. There are several types of joins based on what you are trying to do:  
+* inner_join(): keeps observations that appear in both tables, unmatched rows excluded  
+* full_join(): keeps observations that appear in both tables, all unmatched rows included  
+* left_join(): keeps observations that appear in the 'left' table  
+* right_join(): keeps observations that appear in the 'right' table  
+
+For our data sets, because there is indicator data we do not have the climate data for, and we have climate data that does not match a plot. We want to use an inner_join. 
+```{r}
+all_data = indicator_data %>% inner_join(climate_data, by = c("corrected_ecosite_id" = "Ecological site legacy ID"))
+view(data)
+```
+
+
+# All Together  
+  
+Don't forget that you can pipe many of these functions together. For fun, here is a way to get the same data set with just one long pipe.  
+##leah go back and redu this##
+```{r}
+
+```
+  
+  
+# Summaries  
+  
+Now that we have tidy and cleaned data we can do some analysis with it. One of the most basic things we may want to do is summarize the data. The function to do this is summarise(). We often pair this function with the function group_by() which allows us to get grouped summaries.  
+  
+For our data, lets group by year and calculate mean heights
+```{r}
+herb_height_year = all_data %>% 
+                    group_by(Year) %>%
+                    summarise( Herb_Height= mean(Hgt_Herbaceous_Avg))
+
+herb_height_year
+```
+
+## Save the data in final form for vizualizations
+
+```{r}
+final_data <- all_data
+```
+
+
+###############################################################################
+\newpage
+# Part 3: Data Vizualizations
+
+
+# Graphics with ggplot2
+
+## Why GGplot2?
+
+ggplot2 is a popular R package for producing data and statistical graphics. It is based on the "Grammer of Graphics" which allows you to create graphs by combining multiple independent components. In this way, ggplot2 is more powerful and useful for customizing graphics to your needs. 
+
+ggplot2 works iteratively by layering data, plot types, and aesthetics onto our graphics. All plots start with the function **ggplot()**, include *data* (what we want to plot), and a *mapping* (how we want to visualize the data).
+
+Within the **mapping**, we can add our graphical layers or **geom**, that tell ggplot how to display our data (e.g. **geom_point**, **geom_line**, **geom_bar**). Within our **geom**, we can add the aesthetic function **aes()** to assign data to the geom, change color, size, fill, or transparency (alpha). 
+
+We can also change the aesthetics of our graph by **scale**ing our values to different colors, sizes, or shapes. This is also where our legends come from. We can add a **theme** to our plots to control additional aesthetics like font size.
+
+**Facet**ing allows us to break up and display our data by different groups.
+
+## Histogram
+
+Let's start out with a basic histogram to get a feel for our response variable, invasive annual grasses (AH_AnnGrassCover)
+
+We can call the variable of interest and ggplot will count up the number of observations that fall within a pre-defined number of "bins". 
+```{r}
+#we can pipe in ggplot2!
+final_data %>% #pipe in our data here
+  ggplot() + #then call ggplot and add on our mapping and aesthetics 
+  geom_histogram(aes(x = AH_AnnGrassCover), bins = 5) #our variable of interest goes on the x axis and we can assign the bin size.
+
+#these bins are a little too wide to get a good feel for our data distribution
+```
+
+### Changing bin size
+```{r}
+#change the bin size to 10
+final_data %>% 
+  ggplot() + 
+  geom_histogram(aes(x = AH_AnnGrassCover), bins = ) 
+
+
+#Looks like we have some 0 inflated data! 
+#We would want to keep that in mind for any statistical analyses. 
+```
+
+## Box plot
+
+Now let's try a basic box plot to visualize how invasive annual grasses vary by year (as a factor). 
+Box plots provide a little more information about our variable including the median, quantiles, and outliers.
+```{r}
+
+final_data %>%
+  ggplot() + 
+  geom_boxplot(aes(x = Year, y = AH_AnnGrassCover)) #instead of a histogram, we'll call a box plot with x as our year factor variable and AH_AnnGrassCover on the y axis
+
+#neat! Looks like annual grass cover varies by year
+```
+
+## Layering plot types
+
+What if we want to see the raw data displayed on top of the box plot? We can layer mappings by adding geoms to our existing plot.
+
+### Adding points
+```{r}
+final_data %>%
+  ggplot(aes(x = Year, y = AH_AnnGrassCover)) + #we can assign x and y in the ggplot call and it will carry over into all our subsequent geoms
+  geom_boxplot() + 
+  geom_point() #add raw data as points
+
+#those points are difficult to see when they're all crowded on top of each other, let's try out geom_jitter
+```
+
+### Jittering points
+
+Jittering points allows us better visualize overlapping points.
+```{r}
+final_data %>%
+  ggplot(aes(x = Year, y = AH_AnnGrassCover)) + 
+  geom_boxplot() + 
+  geom_jitter() #add jittered points
+```
+
+## Scatter Plot
+
+We can also use geom_point to create scatter plots to visualize relationships between two continuous variables. In this case invasive annual grass cover vs. perennial grass cover (AH_PerenGrassCover)
+
+```{r}
+final_data %>%
+ggplot(aes(x = AH_PerenGrassCover, y = AH_AnnGrassCover)) +
+  geom_point() #now we have AH_PerenGrassCover as our X variable and AH_AnnGrassCover as our y variable
+```
+
+## Pretty graphics!
+
+### Changing colors and shapes
+
+Let's make it a little prettier by changing the color, size, and shape of the points
+
+Some colors can be spelled out in ggplot like 'red', 'blue', 'yellow', others can be called using a code. Here's a great resources for [selecting colors in r](chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf)
+
+We can also change the size and shape of points by assigning values to *size =* and *pch =*
+Here is a resource for [assigning shapes (pch) to points](https://urldefense.com/v3/__http://www.sthda.com/english/wiki/r-plot-pch-symbols-the-different-point-shapes-available-in-r__;!!JYXjzlvb!kDz6d09IT9j5Y4PKUEa6qoRDcLV9SZy1uBFjopaloca5Ie3oZAPWEGA1DCrF5X7AxARsoqKAHcagMShElJAXRdaDaDg$ )
+
+```{r}
+final_data %>%
+  ggplot(aes(x = AH_PerenGrassCover, y = AH_AnnGrassCover)) + 
+  geom_point(
+             color = 'tomato', size = 2, pch = 2) #color, size of points, pch = shape of point can go outside the aes() function.
+
+```
+
+We can change point properties based on other variables in our plots. 
+
+Here we'll change the color of the points to reflect which year they correspond with. To do this, we'll add *color =* element to our geom_point within the *aes()* call and assign it to vary by  *Year*.
+
+```{r}
+final_data %>%
+  ggplot(aes(x = AH_PerenGrassCover, y = AH_AnnGrassCover, color = Year)) + #change color by year
+  geom_point(size = 3, alpha = 0.7) # make  points semi transparent to help with overlap
+```
+
+### Themes! 
+
+ggplot2 has pre-set themes that change multiple aspects of our graphics at once. Read more about themes [here](https://urldefense.com/v3/__https://ggplot2.tidyverse.org/reference/ggtheme.html__;!!JYXjzlvb!kDz6d09IT9j5Y4PKUEa6qoRDcLV9SZy1uBFjopaloca5Ie3oZAPWEGA1DCrF5X7AxARsoqKAHcagMShElJAXqCEvg3g$ )
+```{r}
+final_data %>%
+  ggplot(aes(x = AH_PerenGrassCover, y = AH_AnnGrassCover, color = Year)) + 
+  geom_point(size = 3, alpha = 0.7) +
+  theme_bw(13) #add a theme and base size to change the background color and font
+```
+
+
+Practice time! See what happens when you increase or decrease alpha and size. You can also try changing to a different theme: theme_classic, theme_dark, etc. 
+
+```{r, error=TRUE}
+# remove the hashtags from the lines below (fun trick, highlight lines and press 'ctrl + shift + C')
+
+
+# final_data %>%
+#   ggplot(aes(x = AH_PerenGrassCover, y = AH_AnnGrassCover, color = Year)) + 
+#   geom_point( size = , alpha = ) +
+#   theme_bw(13)
+
+```
+
+### Adding Labels
+
+ggplot2 makes it easy to add custom axis labels and titles to our plots. Give it a try!
+
+```{r}
+final_data %>%
+  ggplot() + 
+  geom_point(aes(x = AH_PerenGrassCover, y = AH_AnnGrassCover, color = Year), 
+             size = 3, alpha = 0.7) +
+  theme_bw(13)+
+  ggtitle("clever title here") + #add title 
+  xlab("perennial grass cover") + #add x label
+  ylab("invasive annual grass cover") #add y label
+
+```
+
+
+## Adding trend lines
+
+The geom_smooth() function allows us to add a trend line over an existing plot.
+The default smoother is a loess smooth line, but we can change the type of fit to a straight fit or wigglier fit if we want (e.g. method = "lm"). 
+
+*Remember, this is for data visualization/exploration purposes, and model assumptions should be checked before using trend lines to display statistical results. 
+```{r}
+
+final_data %>%
+  ggplot(aes(x = sqrt(AH_PerenGrassCover), y = sqrt(AH_AnnGrassCover), color = Year), #sqrt variables for easier visualization
+             size = 3, alpha = 0.7) + 
+  geom_point()+ 
+  geom_smooth(method = "lm", se = FALSE)+ #add a smoothed term and remove grey confidence intervals
+  theme_bw(13)+
+  ggtitle("Scatter plot of range data") + 
+  xlab("sqrt(perennial grass cover)") + 
+  ylab("sqrt(invasive annual grass cover)") 
+```
+
+
+### Faceting
+
+ggplot allows us to split one plot into multiple plots based on a factor in the data using the facet_wrap() function. 
+
+Instead of on the same plot, Let's visualize years on different plots by adding a facet
+
+```{r}
+final_data %>%
+  ggplot(aes(x = sqrt(AH_PerenGrassCover), y = sqrt(AH_AnnGrassCover), color = Year), #sqrt variables for easier visualization
+             size = 3, alpha = 0.7) + 
+  geom_point()+ 
+  theme_bw(13)+
+  ggtitle("Scatter plot of range data") + 
+  xlab("sqrt(perennial grass cover)") + 
+  ylab("sqrt(invasive annual grass cover)") +
+  facet_wrap(facets = vars(Year))
+```
+
+### Exporting plots
+
+After we make our graphics, we can save them to a file in whatever format you'd like. The ggsave() function allows you to change the dimension and resolution of your plot by adjusting the width, height, and dpi arguments. 
+
+```{r}
+#first we need to assign our plot to an object that we can export.
+my_plot <- final_data %>%
+  ggplot(aes(x = sqrt(AH_PerenGrassCover), y = sqrt(AH_AnnGrassCover), color = Year), #sqrt variables for easier visualization
+             size = 3, alpha = 0.7) + 
+  geom_point()+ 
+  theme_bw(13)+
+  ggtitle("Scatter plot of range data") + 
+  xlab("sqrt(perennial grass cover)") + 
+  ylab("sqrt(invasive annual grass cover)") +
+  facet_wrap(facets = vars(Year))
+
+ggsave("my_awesome_plot.png", my_plot, width = 15, height = 10)
+```
+
+
+### Now you try! 
+
+Build a ggplot graphic from scratch using the code above for reference.
+**Challenge**: Create a scatter plot with AH_AnnGrassCover on the y axis and AH_ShrubCover on the x axis
+ 
+
+Let us know if you run into issues - We're happy to help!
+
+```{r, error = TRUE}
+#final_data %>%
+#  ggplot() +
+
+```
+
+
+## Resources
+
+There's so much more we can do with ggplot2! Here are some sites that can take your plotting in ggplot to the next level!
+
+https://urldefense.com/v3/__https://towardsdatascience.com/data-visualization-with-ggplot2-db04c4956236__;!!JYXjzlvb!kDz6d09IT9j5Y4PKUEa6qoRDcLV9SZy1uBFjopaloca5Ie3oZAPWEGA1DCrF5X7AxARsoqKAHcagMShElJAX--imPbc$  
+https://urldefense.com/v3/__https://ggplot2-book.org/index.html__;!!JYXjzlvb!kDz6d09IT9j5Y4PKUEa6qoRDcLV9SZy1uBFjopaloca5Ie3oZAPWEGA1DCrF5X7AxARsoqKAHcagMShElJAXu7Iv4B4$  
+https://urldefense.com/v3/__https://datacarpentry.org/R-ecology-lesson/04-visualization-ggplot2.html__;!!JYXjzlvb!kDz6d09IT9j5Y4PKUEa6qoRDcLV9SZy1uBFjopaloca5Ie3oZAPWEGA1DCrF5X7AxARsoqKAHcagMShElJAXpY_myEU$  
+https://urldefense.com/v3/__https://www.sharpsightlabs.com/blog/geom_smooth/__;!!JYXjzlvb!kDz6d09IT9j5Y4PKUEa6qoRDcLV9SZy1uBFjopaloca5Ie3oZAPWEGA1DCrF5X7AxARsoqKAHcagMShElJAXXy5CZnU$  
+
