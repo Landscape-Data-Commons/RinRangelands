@@ -27,6 +27,7 @@ Make sure your working directory is set for Part2 of this workshop, for example:
 
 Now we need to pull in some polygons for our region of interest so that we can set a spatial boundaries on our data.  
 *GH will come back and change the fetch edit command so that these data are already downloaded*
+*It'd be nice to leave it in, but perhaps commented out?*
 ```{r}
 # get polygons
 chihuahuan_desert <- read_sf("MapLayers/ChihuahuanDesert.shp")
@@ -36,41 +37,42 @@ sandy_esg <- read_sf("MapLayers/SandyESG.shp")
 data <- fetch_ldc_spatial(chihuahuan_desert,
                           data_type = "indicators")
 
-header <-fetch_ldc(data_type = "header")
+head(data)
+
+# Let's do a bit of clean up and make sure the data fields are formatted properly
+data <- data |> dplyr::mutate(DateVisited = lubridate::as_date(DateVisited),
+                                    Year = lubridate::year(DateVisited) |> as.factor())
+
+
+# Make sure the Lat/Long coordinates are numeric
+data <- data |> 
+  dplyr::mutate(Longitude_NAD83 = as.numeric(Longitude_NAD83),
+                Latitude_NAD83 = as.numeric(Latitude_NAD83)) 
+
 ```
 
 ## 2. Establish benchmark
-*add a description of these benchmark points - where did they come from and what will we be using them for?*
+We want to understand which sites might be susceptible to wind erosion. To do this, we took a subset (~600) of the points in the ecoregion and compared them with wind erosion models and determined that decreases in total foliar cover below 30% are associated with an increase in wind erosion risk. However, we do not want to apply the benchmark to the points used to develop the benchmark. So we will first remove the benchmark generation points. Then we will apply the 30% benchmark to these points. 
 ``` {r}
-# get benchmark data
+# get benchmark developmentdata
 benchmark <- read.csv("benchmark_points.csv")
 
 head(benchmark)
 ```
 
 ## 3. Apply benchmark
-*GH come back and break this code up into more lines to better explain what is going on*
-*GH come back and add info about CRS*
 ``` {r}
-# note if data have been used in benchmarking
+# remove data that have been used in benchmarking
+# check total number of plots
+nrow(data)
+data <- data |> subset(!PrimaryKey %in% benchmark$PrimaryKey)
+nrow(data)
 
-# subset data to only include rows where Longitude values are not missing 
+# Apply the benchmark of 30% to the Total Foliar Cover values
+data <- data |> dplyr::mutate(evaluated = dplyr::case_when(TotalFoliarCover >30 ~ "Meeting",
+                                                           TotalFoliarCover <=30 ~ "Not meeting"
+))
 
-# add a new column to the benchmark data frame based on the value in PrimaryKey Key values. If PrimaryKey are in the benchmark dataset, then value is set to "benchmark", otherwise they value is set to 'new'
-
-# converts Long and Lat values to numeric
-
-data <- data |> subset(!is.na(Longitude_NAD83)) |> 
-  dplyr::mutate(benchmark =
-                  dplyr::case_when(PrimaryKey %in% benchmark$PrimaryKey~ "benchmark",
-                                   !PrimaryKey %in% benchmark$PrimaryKey~ "new")
-                ) |> 
-  dplyr::mutate(Longitude_NAD83 = as.numeric(Longitude_NAD83),
-                Latitude_NAD83 = as.numeric(Latitude_NAD83)) 
-# save these data as a csv - this will automatically save to your working directory
-write.csv(data, "ldc_data.csv")
-
-#
 # convert to spatial
 # move from a st to sf object
 # users must specify the columns which are coordinates, and the Coordinate reference system
@@ -84,39 +86,32 @@ sf::st_write(data_sf, "ldc_data.shp", append=F)
 
 ```
 
-***Potentially drop this section***
 
 For management purposes, we are going to focus on the NM portion of the Chihuahuan Desert and the Sandy Ecological Site Group within that area.
 ``` {r}
-
-#In ArcGIS we intersected the Sandy Ecological Site group with our data. You can do this  Nelson, could you help me make this intersection work? I think I moved to R because it wasn't going well in R
-#nm_data <- sf::st_read("MapLayers/ldc_data_nm_intersect.shp")
+# Subset the data to points found in New Mexico
 nm_data <- data_sf |> subset(State == "NM")
 
-# not sure what the intersect data contains that we dont already have in the data_sf...
-nm_data <- nm_data |> dplyr::mutate(NWERN_JER = dplyr::case_when(ProjectKey %in% "NWERN_JER"~ "yes"),
-                                    Chihuahuan_desert = "yes",
-                                       MLRA42 = dplyr::case_when(mlrarsym %in% "42"~ "yes"),
-                                    DateVisited = lubridate::as_date(DateVisited),
-                                    Year = lubridate::year(DateVisited) |> as.factor(),
-                                    # benchmark points
-                                    evaluated = dplyr::case_when(TotalFoliarCover >30 ~ "Meeting",
-                                                                 TotalFoliarCover <=30 ~ "Not meeting"
-                                                                 ))
+# Identify the plots that are found in the Sandy ESG. Load in a table identifying all the SandyESG plots
+sandy_plots <- read.csv("SandyESG_plots.csv")
 
-# old code: 
-# nm_data <- nm_data |> dplyr::mutate(NWERN_JER = dplyr::case_when(PrjctKy %in% "NWERN_JER"~ "yes"),
-#                                     Chihuahuan_desert = "yes",
-#                                     DateVisited = lubridate::as_date(DatVstd),
-#                                     Year = lubridate::year(DateVisited) |> as.factor(),
-#                                     # benchmark points
-#                                     evaluated = dplyr::case_when(TtlFlrC >30 ~ "Meeting",
-#                                                                  TtlFlrC <=30 ~ "Not meeting"
-#                                                                  )
+# Join this back to the nm_data
+nm_data <- dplyr::left_join(nm_data, 
+                            sandy_plots, 
+                            by = "PrimaryKey")
 
+#TODO: Georgia we could also do this intersection in R if you want. In ArcGIS we intersected the Sandy Ecological Site group with our data. You can do this  Nelson, could you help me make this intersection work? I think I moved to R because it wasn't going well in R
+
+
+# Identify the membership of each plot within different polygons (Chihuahuan Desert, MLRA 42, SandyESG and a long-term research site at the Jornada Experimental Range called "NWERN_JER")
+nm_data <- nm_data |> dplyr::mutate(Chihuahuan_desert = "yes",
+                                    MLRA42 = dplyr::case_when(mlrarsym %in% "42"~ "yes"),
+                                    NWERN_JER = dplyr::case_when(ProjectKey %in% "NWERN_JER"~ "yes"))
+
+# To faciliate plotting, it would be helpful if the data were long rather than wide.
 nm_data_long <- as.data.frame(nm_data) |>
   tidyr::pivot_longer(cols = c("MLRA42",
-                               #"SandyESG", 
+                               "SandyESG", 
                                "NWERN_JER", 
                                "Chihuahuan_desert"),
                       names_to = "region",
@@ -124,13 +119,14 @@ nm_data_long <- as.data.frame(nm_data) |>
   subset(region_membership =="yes")|>
   dplyr::mutate(region = factor(region)|>
                   dplyr::recode( "NWERN_JER" = "Site",
-                                 # "SandyESG" = "ESG", # TODO decide if we want SandyESG or not
+                                 "SandyESG" = "ESG", 
                                  "MLRA42" = "MLRA",
                                  "Chihuahuan_desert" = "Ecoregion"))
 
+# We also need region to be a factor for easier plot formatting
 nm_data_long$region <- factor(nm_data_long$region,
                               levels = c( "Site", 
-                                          #"ESG",
+                                          "ESG",
                                           "MLRA",
                                           "Ecoregion")
                               )
@@ -140,8 +136,7 @@ nm_data_long$region <- factor(nm_data_long$region,
 
 ``` {r}
 # box plot
-ggplot(nm_data_long |> subset(benchmark== "new" &
-                                Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
+ggplot(nm_data_long |> subset(Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
                                 TotalFoliarCover),
        aes(x = Year,
            y = TotalFoliarCover,
@@ -155,8 +150,7 @@ ggplot(nm_data_long |> subset(benchmark== "new" &
   guides(color=guide_legend(title="Benchmark status"))
 
 # bar chart
-ggplot(nm_data_long |> subset(benchmark== "new" &
-                                Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
+ggplot(nm_data_long |> subset(Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
                                 TotalFoliarCover),
        aes(x = Year,
            y = TotalFoliarCover,
@@ -169,7 +163,7 @@ ggplot(nm_data_long |> subset(benchmark== "new" &
   guides(fill=guide_legend(title="Benchmark status"))
 
 # summarize
-nm_data_summary <- nm_data_long |> subset(benchmark== "new" &
+nm_data_summary <- nm_data_long |> subset(
                          Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
                          TotalFoliarCover) |>
   dplyr::select(PrimaryKey, region, Year) |>
