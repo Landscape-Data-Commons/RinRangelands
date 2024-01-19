@@ -1,0 +1,97 @@
+---
+title: 'Accessing public data with trex (Terrestrial Rangeland data EXtraction) '
+author: "Nelson Stauffer"
+date: "2024-01-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# We'll need these installed from CRAN
+required_packages <- c("ggplot2", "sf", "remotes", "ggmap")
+install.packages(required_packages[!required_packages %in% installed.packages()])
+
+# And trex if it isn't installed yet, make sure that it is
+if (!"trex" %in% installed.packages()) {
+  remotes::install_github(repo = "landscape-data-commons/trex")
+}
+
+# We'll load up all the data we need for later
+boundary_polygon <- sf::st_transform(x = sf::st_read(dsn = "trex",
+                                                     layer = "jer_boundary"),
+                                     crs = "+proj=longlat +ellps=GRS80 +no_defs")
+boundary_centroid <- as.vector(sf::st_coordinates(sf::st_centroid(x = boundary_polygon)))
+boundary_bb <- sf::st_bbox(obj = boundary_polygon)
+ggmap::register_stadiamaps(key = "d5cfeb13-f1d1-4f2b-9a7f-433e6a3cde24")
+base_layer <- ggmap::get_stadiamap(bbox = c("left" = unname(boundary_bb$xmin - 0.08),
+                                            "bottom" = unname(boundary_bb$ymin - 0.08),
+                                            "right" = unname(boundary_bb$xmax + 0.08),
+                                            "top" = unname(boundary_bb$ymax + 0.08)),
+                                   zoom = 11,
+                                   maptype = "stamen_terrain_background")
+```
+
+## Overview
+The package [*trex*](https://github.com/landscape-data-commons/trex) can be used to retrieve publicly-available data directly from the [Landscape Data Commons (LDC)](https://landscapedatacommons.org) and [Ecosystem Dynamics Interpretive Tool (EDIT)](https://edit.jornada.nmsu.edu) APIs. This lets you programmatically query either source from R without having to construct your own API calls. Use cases include pulling monitoring data from the LDC for an area of interest or a specific ecological site and retrieving ecological site properties associated with data.
+
+### Landscape Data Commons (LDC)
+The Landscape Data Commons is a repository for multiple ecological data sets including data from the Bureau of Land Management (BLM) Assessment, Inventory, and Monitoring program ([AIM](https://www.blm.gov/aim)) and the Natural Resources Conservation Service ([NRCS](https://www.nrcs.usda.gov/)) Landscape Monitoring Framework (LMF). These are "raw" data from the field which have undergone quality control measures and are suitable for deriving ecological indicators, e.g., percent foliar cover or average sagebrush height.
+
+### Ecosystem Dynamics Interpretive Tool (EDIT)
+EDIT is a database containing Ecological Site Descriptions (ESDs) which define the properties associated with ecological sites. An ecological site is all the areas of a landscape which share geophysical and climatic properties and which produce similar kinds and amounts of vegetation. Knowing what ecological site a part of a landscape falls in can inform interpreting data from that area, e.g., having 10% of a location covered with vegetation means something very different on a steep, dry, gravelly slope than in a flat, loamy grassland.
+
+## Querying the LDC
+There are a few functions in *trex* which query the LDC, each of which is aimed at a different scenario. If you have a polygon or set of polygons and you want to retrieve data from sampling locations within them, you can use `fetch_ldc_spatial()`. If you want to retrieve data associated with one or more ecological sites, you can use `fetch_ldc_ecosite()`. For any other data retrieval, you can use the function that underpins those two, `fetch_ldc()`.
+
+### Retrieving data within a spatial extent using `fetch_ldc_spatial()`
+The function `fetch_ldc_spatial()` was written to streamline querying the LDC using polygons. It compares your polygon(s) against the data locations and returns the requested data type associated with the locations falling within the polygon(s).
+
+For this example, we'll use the Jornada Experimental Range (JER) in southern New Mexico, shown in the map below.
+```{r map, echo=FALSE, message=FALSE, warning=FALSE}
+ggmap::ggmap(ggmap = base_layer) +
+  ggplot2::geom_sf(data = boundary_polygon,
+                   fill = "goldenrod2",
+                   alpha = 0.2,
+                   inherit.aes = FALSE) +
+  ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+                 panel.grid = ggplot2::element_blank(),
+                 axis.title = ggplot2::element_blank(),
+                 axis.ticks = ggplot2::element_blank(),
+                 axis.text = ggplot2::element_blank())
+```
+
+Because we've already loaded the JER boundary polygon as an sf polygon object using `sf::st_read()` and that's what `fetch_ldc_spatial()` expects, we can easily ask for data from within that polygon.
+As a first example, we'll simply ask for the header table, which contains the most basic information about the sampling locations, importantly their PrimaryKeys (which are unique to each location) and their coordinates.
+
+``` {r get_headers}
+# The argument called polygons takes an sf polygon object while data_type takes
+# the name of one of the tables that the LDC serves out.
+# Note that the polygons are treated as a single unit, even if your object
+# contained multiple or multipart polygons.
+jer_headers <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
+                                       data_type = "header")
+```
+<<<INSERT THE TABLE HERE, NICELY FORMATTED>>>
+
+The header table is nice, but is usually just a starting point or used specifically for map making. If you wanted to convert that to an sf points object for any kind of spatial use, you'd need to convert it.
+
+``` {r headerS_to_points}
+# 
+jer_points <-  sf::st_as_sf(x = jer_headers,
+                             coords = c("Longitude_NAD83",
+                                        "Latitude_NAD83"),
+                             crs = "+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs +type=crs")
+```
+
+### Retrieving data associated with ecological sites using fetch_ldc_ecosite()
+
+### Retrieving data using key values using fetch_ldc()
+
+
+## Querying EDIT
+
+### Getting the MLRA codes
+
+### Getting specifics
+<<<
