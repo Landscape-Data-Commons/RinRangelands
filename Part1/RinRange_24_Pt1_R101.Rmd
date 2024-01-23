@@ -268,6 +268,13 @@ indicator_filter = indicator_data %>% filter(Year == 2011 & BareSoilCover >= 50)
 view(indicator_filter)
 ```
 
+# Challenge: Filter the indicator data to plots which were sureveyed in 2020, 2021, and 2022, and which have Grass cover greater than 40%. 
+You will need to look up the column names in the df to complete this 
+```{r}
+indicator_filter_challenge = indicator_data %>% filter()
+```
+
+
 # Dealing with NA values  
   
 If you have NA values in your data set it is important to carefully consider what they mean before you do anything with them. Are the NA values signifying true missing information? Are they actually signifying a 0? Do you only have a few NA's and removal of those observations won't impact analysis? Do you have a lot of NA's and you need to figure out a way to deal with them?   
@@ -284,8 +291,16 @@ From my knowledge of how this data set, I know that these NA's actually signify 
 
 With this knowledge we now want to replace the NA values with 0's. 
 ```{r}
-indicator_data = indicator_data %>% mutate(Hgt_Herbaceous_Avg = replace(Hgt_Herbaceous_Avg, is.na(Hgt_Herbaceous_Avg), 0))
+indicator_data = indicator_data %>% mutate(Hgt_Woody_Avg = replace(Hgt_Woody_Avg, is.na(Hgt_Woody_Avg), 0))
 ```
+
+# Challenge: go through these steps with herbaceous height data
+- find rows where height is na
+- replace na values in that row with 0
+
+```{r}
+```
+
 
 
     
@@ -306,6 +321,11 @@ To convert the data back to a long data set we use the function pivot_longer().
 climate_data_long = climate_data_renamed %>% pivot_longer(c("mean annual precipitation", "frost free days", "freeze free days"), names_to = "Property", values_to = "Average")%>% distinct()
 ```
 
+We can also rename columns with the function 'rename':
+```{r}
+climate_data_long = climate_data_long %>% rename(Mean = Average)
+# average is the old column name, and mean is the new name
+```
 
 
 # Join data  
@@ -354,13 +374,19 @@ For our data, lets group by year and calculate mean heights
 ```{r}
 herb_height_year = all_data %>% 
                     group_by(Year) %>%
-                    summarise( Herb_Height= mean(Hgt_Herbaceous_Avg))
+                    summarise(Herb_Height= mean(Hgt_Herbaceous_Avg))
 
 herb_height_year
 ```
+# Challenge: 
+Summarize mean, minimum and maximum annual grass cover by MLRA
+```{r}
+ag_mlra_summary = all_data %>% 
+```
+
+
 
 ## Save the data in final form for vizualizations
-
 ```{r}
 final_data <- all_data
 ```
