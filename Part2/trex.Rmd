@@ -48,10 +48,10 @@ There are a few functions in *trex* which query the LDC, each of which is aimed 
 The function `fetch_ldc_spatial()` was written to streamline querying the LDC using polygons. It compares your polygon(s) against the data locations and returns the requested data type associated with the locations falling within the polygon(s).
 
 For this example, we'll use the Jornada Experimental Range (JER) in southern New Mexico, shown in the map below.
-```{r map, echo=FALSE, message=FALSE, warning=FALSE}
+```{r map_basic, echo=FALSE, message=FALSE, warning=FALSE}
 ggmap::ggmap(ggmap = base_layer) +
   ggplot2::geom_sf(data = boundary_polygon,
-                   fill = "goldenrod2",
+                   fill = "burlywood1",
                    alpha = 0.2,
                    inherit.aes = FALSE) +
   ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
@@ -64,7 +64,7 @@ ggmap::ggmap(ggmap = base_layer) +
 Because we've already loaded the JER boundary polygon as an sf polygon object using `sf::st_read()` and that's what `fetch_ldc_spatial()` expects, we can easily ask for data from within that polygon.
 As a first example, we'll simply ask for the header table, which contains the most basic information about the sampling locations, importantly their PrimaryKeys (which are unique to each location) and their coordinates.
 
-``` {r get_headers}
+``` {r get_headers_spatial, warning=FALSE}
 # The argument called polygons takes an sf polygon object while data_type takes
 # the name of one of the tables that the LDC serves out.
 # Note that the polygons are treated as a single unit, even if your object
@@ -74,24 +74,104 @@ jer_headers <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
 ```
 <<<INSERT THE TABLE HERE, NICELY FORMATTED>>>
 
-The header table is nice, but is usually just a starting point or used specifically for map making. If you wanted to convert that to an sf points object for any kind of spatial use, you'd need to convert it.
+The header table is nice, but is usually just a starting point or used specifically for map making. If you wanted to use the headers for anything spatial, you'd need to convert it into an sf points object.
 
-``` {r headerS_to_points}
-# 
+``` {r headers_to_points}
+# The function sf::st_as_sf() will convert a data frame that includes coordinates
+# into an sf object.
+# In this case, we have the coordinates in the North American Datum 1983 (NAD83)
+# Coordinate Reference System so we'll tell it which variables have the latitude
+# and longitude values and that the CRS code is 4269 (that is, NAD83)
 jer_points <-  sf::st_as_sf(x = jer_headers,
-                             coords = c("Longitude_NAD83",
-                                        "Latitude_NAD83"),
-                             crs = "+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs +type=crs")
+                            coords = c("Longitude_NAD83",
+                                       "Latitude_NAD83"),
+                            crs = 4269)
+```
+```{r map_points, echo=FALSE, message=FALSE, warning=FALSE}
+ggmap::ggmap(ggmap = base_layer) +
+  ggplot2::geom_sf(data = boundary_polygon,
+                   fill = "burlywood1",
+                   alpha = 0.2,
+                   inherit.aes = FALSE) +
+  ggplot2::geom_sf(data = jer_points,
+                   color = "white",
+                   fill = "darkorange1",
+                   shape = 21,
+                   size = 3,
+                   inherit.aes = FALSE) +
+  ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+                 panel.grid = ggplot2::element_blank(),
+                 axis.title = ggplot2::element_blank(),
+                 axis.ticks = ggplot2::element_blank(),
+                 axis.text = ggplot2::element_blank())
+```
+
+However, the headers on their own aren't very useful. Luckily, we can also use `fetch_ldc_spatial()` to grab other kinds of data from the LDC associated with our polygon, including the already-computed standard AIM indicators and raw data from data collection methods like Line-Point Intercept, Gap Intercept, Soil Aggregate Stability, Vegetation Height, and Species Richness.
+
+``` {r get_data_spatial, warning=FALSE}
+# The LDC functions in trex can retrieve from only one data table at a time, so
+# you'd need a different function call for each. This code will ask for the
+# computed indicators.
+jer_indicators <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
+                                          data_type = "indicators")
+
+# And this will pull the raw LPI data that was used to compute the cover indicators
+# that we just got in jer_indicators
+jer_lpi <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
+                                   data_type = "lpi",
+                                   # This argument asks the API to give the data
+                                   # back in chunks of 5000 records at a time
+                                   # so that we don't overwhelm the server, but
+                                   # we'll still get all the data.
+                                   take = 5000)
 ```
 
 ### Retrieving data associated with ecological sites using fetch_ldc_ecosite()
+Another way to ask for data from the LDC is by ecological site ID with `fetch_ldc_ecosite()`. This function is just a convenient wrapper that queries to find all the primarykey values associated with the requested ecological site IDs in the header table and then queries the data table with those primarykey values. The end result is that you can get data by ecological site from data tables that don't include ecological site IDs.
+
+``` {r get_by_ecosite, warning=FALSE}
+# This will return all of the Canopy Gap data from sampling that occurred at
+# locations that were identified as falling in the ecological sites R036XB006NM
+# and R036XB007NM which are found in and around the San Luis Valley in northern
+# New Mexico.
+ecosite_gap <- trex::fetch_ldc_ecosite(keys = c("R036XB006NM", "R036XB007NM"),
+                                       data_type = "gap")
+```
+
+<<<<INSERT TABLE>>>>
 
 ### Retrieving data using key values using fetch_ldc()
 
 
 ## Querying EDIT
+Due to the way that the EDIT API is implemented, it can't be queried in exactly the same way as the LDC, so it has its own functions. The core is `fetch_edit()` which returns the data matching the request. Because of the way that EDIT receives data requests through its API, you need to tell `fetch_edit()` which Major Land Resource Area (MLRA) or Areas that you're asking for data from. If you are unsure of valid MLRAs, you can always use `fetch_mlra_codes()` for a full list. If you have specific ecological site IDs you're wanting to retrieve data for, the MLRA is part of those, e.g., R**036X**B006NM.
 
-### Getting the MLRA codes
+### Getting details
+EDIT serves out ecological site information across several tables, including climatic, landform, physiographic, production, overstory, state and transition, and more. In order to retrieve data from one, you must specify the MLRA and the table.
 
-### Getting specifics
-<<<
+``` {r fetch_edit, warning=FALSE}
+# This will return a data frame of all the ecological sites that occur in the 
+# MLRA 036X, including their current ID, legacy ID they may have had previously,
+# and name.
+mlra_036x_ecosites <- trex::fetch_edit(mlra = "036X",
+                                       data_type = "ecosites")
+
+# This asks for the same information across two different MLRAs at the same
+# time: 036X and 042B.
+ecosites <- trex::fetch_edit(mlra = c("036X", "042B"),
+                             data_type = "ecosites")
+
+# This asks for all the climate information available for all the ecological
+# sites in the two MLRAs.
+ecosites <- trex::fetch_edit(mlra = c("036X", "042B"),
+                             data_type = "climate")
+```
+
+It may be that you're trying to identify which ecological site data likely came from. In those cases, you can use "keys" to ask for only data associated with particular values. For example, you may have data from a sampling location where the slope was 7% and you can query EDIT for only data associated with slopes between 5% and 10% to narrow down the possible ecological sites.
+
+``` {r fetch_edit_slope, warning=FALSE}
+gently_sloped_ecosites <- trex::fetch_edit(mlra = c("036X", "042B"),
+                                           data_type = "ecosites",
+                                           keys = "5:10",
+                                           key_type = "slope")
+```
