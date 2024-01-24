@@ -4,15 +4,6 @@ author: "Sarah McCord, Eric Jensen"
 date: "2023-11-30"
 output: html_document
 ---
-
-
-georgia to do
-
-- make maps prettier
-- add ggpubr combo figures 
-
-
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
