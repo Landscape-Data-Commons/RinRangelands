@@ -127,7 +127,7 @@ jer_lpi <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
 ```
 
 ### Retrieving data associated with ecological sites using fetch_ldc_ecosite()
-Another way to ask for data from the LDC is by ecological site ID with `fetch_ldc_ecosite()`. This function is just a convenient wrapper that queries to find all the primarykey values associated with the requested ecological site IDs in the header table and then queries the data table with those primarykey values. The end result is that you can get data by ecological site from data tables that don't include ecological site IDs.
+Another way to ask for data from the LDC is by ecological site ID with `fetch_ldc_ecosite()`. This function is just a convenient wrapper that queries to find all the PrimaryKey values associated with the requested ecological site IDs in the header table and then queries the data table with those PrimaryKey values. The end result is that you can get data by ecological site from data tables that don't include ecological site IDs.
 
 ``` {r get_by_ecosite, warning=FALSE}
 # This will return all of the Canopy Gap data from sampling that occurred at
@@ -141,7 +141,17 @@ ecosite_gap <- trex::fetch_ldc_ecosite(keys = c("R036XB006NM", "R036XB007NM"),
 <<<<INSERT TABLE>>>>
 
 ### Retrieving data using key values using fetch_ldc()
+The core function for querying the LDC is `fetch_ldc()`. It's used for building all the LDC API queries, including those being sent by `fetch_ldc_spatial()` and `fetch_ldc_ecosite()` and, while not quite as flexible as hand writing the queries, is much more convenient. The basic idea is that you specify the data table you want data from and then values to restrict the results you get back, like applying a filter on the server side. The values are referred to as "keys" and can be applied to any variable in the table you're asking for data from.
 
+``` {r ldc_keys, warning=FALSE}
+# There are a few common use cases for fetch_ldc()
+
+# When you want data from the indicator table, but only for sampling locations
+# with specific values, e.g., all the sampling locations where bare ground makes
+# up more than half the area
+trex::fetch_ldc(keys = as.character(50:100),
+                key_type = "")
+```
 
 ## Querying EDIT
 Due to the way that the EDIT API is implemented, it can't be queried in exactly the same way as the LDC, so it has its own functions. The core is `fetch_edit()` which returns the data matching the request. Because of the way that EDIT receives data requests through its API, you need to tell `fetch_edit()` which Major Land Resource Area (MLRA) or Areas that you're asking for data from. If you are unsure of valid MLRAs, you can always use `fetch_mlra_codes()` for a full list. If you have specific ecological site IDs you're wanting to retrieve data for, the MLRA is part of those, e.g., R**036X**B006NM.
