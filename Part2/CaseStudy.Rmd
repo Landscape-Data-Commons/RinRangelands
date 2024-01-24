@@ -227,10 +227,7 @@ head(summary(nm_data$SandyESG), 20)
 ```{r}
 # To faciliate plotting, it would be helpful if the data were long rather than wide.
 nm_data_long <- as.data.frame(nm_data) |>
-  tidyr::pivot_longer(cols = c("MLRA42",
-                               "SandyESG", 
-                               "NWERN_JER", 
-                               "Chihuahuan_desert"),
+  tidyr::pivot_longer(cols = c("MLRA42","SandyESG", "NWERN_JER", "Chihuahuan_desert"),
                       names_to = "region",
                       values_to = "region_membership") |>
   subset(region_membership =="yes")|>
@@ -242,11 +239,7 @@ nm_data_long <- as.data.frame(nm_data) |>
 
 # We also need region to be a factor for easier plot formatting
 nm_data_long$region <- factor(nm_data_long$region,
-                              levels = c( "Site", 
-                                          "ESG",
-                                          "MLRA",
-                                          "Ecoregion")
-                              )
+                              levels = c( "Site", "ESG","MLRA","Ecoregion"))
 ```
 
 ### Plot the results
