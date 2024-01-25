@@ -44,6 +44,8 @@ EDIT is a database containing Ecological Site Descriptions (ESDs) which define t
 ## Querying the LDC
 There are a few functions in *trex* which query the LDC, each of which is aimed at a different scenario. If you have a polygon or set of polygons and you want to retrieve data from sampling locations within them, you can use `fetch_ldc_spatial()`. If you want to retrieve data associated with one or more ecological sites, you can use `fetch_ldc_ecosite()`. For any other data retrieval, you can use the function that underpins those two, `fetch_ldc()`.
 
+A critical reference for working with the LDC API is the [offical documentation](https://api.landscapedatacommons.org/api-docs). This lists the name of every data table you can query and the details of the variables each contains. You'll need this page in order to know for sure how to ask for data, especially if you're using `fetch_ldc()`.
+
 ### Retrieving data within a spatial extent using `fetch_ldc_spatial()`
 The function `fetch_ldc_spatial()` was written to streamline querying the LDC using polygons. It compares your polygon(s) against the data locations and returns the requested data type associated with the locations falling within the polygon(s).
 
@@ -127,7 +129,7 @@ jer_lpi <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
 ```
 
 ### Retrieving data associated with ecological sites using fetch_ldc_ecosite()
-Another way to ask for data from the LDC is by ecological site ID with `fetch_ldc_ecosite()`. This function is just a convenient wrapper that queries to find all the PrimaryKey values associated with the requested ecological site IDs in the header table and then queries the data table with those PrimaryKey values. The end result is that you can get data by ecological site from data tables that don't include ecological site IDs.
+Another way to ask for data from the LDC is by ecological site ID with `fetch_ldc_ecosite()`. This function is just a convenient wrapper that queries to find *all* the PrimaryKey values associated with the requested ecological site IDs in the header table and then queries the data table with those PrimaryKey values. The end result is that you can get data by ecological site from data tables that don't include ecological site IDs.
 
 ``` {r get_by_ecosite, warning=FALSE}
 # This will return all of the Canopy Gap data from sampling that occurred at
@@ -146,11 +148,85 @@ The core function for querying the LDC is `fetch_ldc()`. It's used for building 
 ``` {r ldc_keys, warning=FALSE}
 # There are a few common use cases for fetch_ldc()
 
-# When you want data from the indicator table, but only for sampling locations
-# with specific values, e.g., all the sampling locations where bare ground makes
-# up more than half the area
-trex::fetch_ldc(keys = as.character(50:100),
-                key_type = "")
+# If you wanted computed indicators, but only from within New Mexico and Colorado
+# then you could ask for that data table but only where the values "NM" and "CO"
+# are found in the variable called State.
+nm_co_indicators <- trex::fetch_ldc(keys = c("NM", "CO"),
+                                    key_type = "State",
+                                    data_type = "indicators")
+```
+
+Currently, keys must be discrete values, so there's no way to ask for something like "sampling locations with greater than 50% bare ground" with numeric values. The best approach to approximate that is to grab more data than you may actually need and then keeping only the data that match your criteria, e.g., retrieving all New Mexico data then using something like `dplyr::filter()` to keep only records where bare ground was greater than 50%. The section "Chaining queries" addresses that.
+
+You can, however, use partial matching. This can be useful for if, for example, you want to pull data associated with an MLRA, the code for which is embedded in the ecological site ID assigned to the data.
+
+``` {r fetch_ldc_mlra, warning=FALSE}
+# We can ask if our keys are part of the values in a variable (key_type)
+# So, if we wanted sampling locations associated with MLRA 036X, we could use
+# the partial matching feature to look for data where "036X" is part of the
+# ecological site ID
+mlra_036x_headers <- trex::fetch_ldc(keys = "036X",
+                                     key_type = "EcologicalSiteID",
+                                     data_type = "header",
+                                     take = 10000,
+                                     # This is the trick! By saying we don't
+                                     # need an *exact* match it'll find all the
+                                     #data where EcologicalSiteID includes "036x"
+                                     exact_match = FALSE)
+```
+
+### Chaining queries
+One of the challenges in asking for data by keys is that you can only use variables that occur in the table being queried. This makes it trickier to do things like getting raw LPI data for the state of New Mexico north of Taos or the raw soil stability data for places in MLRA 036 with foliar cover less than 15%.
+
+The one variable that appears in every data table is PrimaryKey and so we can use that to chain queries together to get what we want. This is what `fetch_ldc_spatial90` and `fetch_ldc_ecosite()` are doing behind the scenes: using a query to get PrimaryKey values and using those to submit another query for another data table.
+
+``` {r chaining_ldc_queries_northern_nm, warning=FALSE}
+# In order to get LPI data for the state of New Mexico, we need all the PrimaryKey
+# values for plots in New Mexico north of Taos. The indicator table contains a
+# variable with state abbreviations in it, so we can query that table to learn
+# which PrimaryKeys are in the returned data and then use those as keys to ask
+# for LPI data.
+nm_indicators <- trex::fetch_ldc(keys = "NM",
+                                 key_type = "State",
+                                 data_type = "indicators")
+
+# But we want only the sites north of Taos, which is at a latitude of 36.4
+nm_indicators_north <- dplyr::filter(.data = nm_indicators,
+                                     # The latitude comes to us as a character
+                                     # string, so we have to coerce it to numeric
+                                     as.numeric(Latitude_NAD83) > 36.4)
+
+# We can pull out the PrimaryKey values to then query again.
+nm_north_primarykeys <- nm_indicators_north$PrimaryKey
+
+# And now we can use those PrimaryKeys to ask for the matching LPI data.
+nm_north_lpi <- trex::fetch_ldc(keys = nm_north_primarykeys,
+                                key_type = "PrimaryKey",
+                                data_type = "lpi",
+                                take = 5000)
+```
+
+``` {r chaining_ldc_queries_mlra, warning=FALSE}
+# In order to get soil stability data for just the low-cover parts of MLRA 036,
+# we can start by grabbing the indicator data for the MLRA. We can use the
+# partial matching trick from above or we can just use the mlrarsym variable
+# which contains MLRA codes
+mlra_036_indicators <- trex::fetch_ldc(keys = "36",
+                                       key_type = "mlrarsym",
+                                       data_type = "indicators")
+
+# But we want only the sites with less than 25% foliar cover
+mlra_036_indicators_lowcover <- dplyr::filter(.data = mlra_036_indicators,
+                                              TotalFoliarCover < 15)
+
+# We can pull out the PrimaryKey values to then query again.
+mlra_036_lowcover_primarykeys <- mlra_036_indicators_lowcover$PrimaryKey
+
+# And now we can use those PrimaryKeys to ask for the matching LPI data.
+mlra_036_lowcover_soil <- trex::fetch_ldc(keys = mlra_036_lowcover_primarykeys,
+                                          key_type = "PrimaryKey",
+                                          data_type = "soilstability",
+                                          take = 5000)
 ```
 
 ## Querying EDIT
@@ -168,13 +244,13 @@ mlra_036x_ecosites <- trex::fetch_edit(mlra = "036X",
 
 # This asks for the same information across two different MLRAs at the same
 # time: 036X and 042B.
-ecosites <- trex::fetch_edit(mlra = c("036X", "042B"),
-                             data_type = "ecosites")
+mlra_036x_042b_ecosites <- trex::fetch_edit(mlra = c("036X", "042B"),
+                                            data_type = "ecosites")
 
 # This asks for all the climate information available for all the ecological
 # sites in the two MLRAs.
-ecosites <- trex::fetch_edit(mlra = c("036X", "042B"),
-                             data_type = "climate")
+mlra_036x_042b_climate <- trex::fetch_edit(mlra = c("036X", "042B"),
+                                           data_type = "climate")
 ```
 
 It may be that you're trying to identify which ecological site data likely came from. In those cases, you can use "keys" to ask for only data associated with particular values. For example, you may have data from a sampling location where the slope was 7% and you can query EDIT for only data associated with slopes between 5% and 10% to narrow down the possible ecological sites.
