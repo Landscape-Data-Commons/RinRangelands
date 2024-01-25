@@ -13,20 +13,24 @@ knitr::opts_chunk$set(echo = TRUE)
 Now we will use all of the skills we have learned in this workshop in a real world case study. This example walks through using R and publicly available datasets to examine how drought is influencing wind erosion in the Chihuahuan Desert. Our goal is to reproduce Figure 4 from McCord et al. 2024 (***https://doi.org/10.1002/ael2.20120***). First, we will query the Landscape Data Commons for data that fall within the Chihuahuan Desert ecoregion. Then, we will use these data to set a benchmark of expected wind erosion risk in the Chihuahuan Desert. With this benchmark in place, we will apply it to the monitoring data in the Landscape Data Commons and compare those results at multiple spatial scales. Finally, we will incorporate drought and remote-sensing based fractional cover data, to provide additional context to the field based monitoring data.
 
 ![](images/benchmark_combined_figure.png) 
+
+Set your working directory 
+make sure it ends in Part 2
+```{r}
+setwd("C:/Users/gharrison/OneDrive - USDA/Documents/R scripts/RinRange_workshop_srm24/Part2")
+```
+
 Library the packages we will use in this demo
 ```{r}
+library(tidyverse)
 library(trex) # for fulling data on the Landscape Data Commons
 library(sf) # for processing spatial data
-library(ggplot2) # for data visualization
-library(viridis) # colorblind friendly color palettes
 library(httr2) # for Climate Engine API requests
 library(mapview) # for visualizing spatial data
-library(rnaturalearth) # for base maps
 library(ggpubr) # for combining multiple ggplot objects
 ```
 
 ## 1. Prepare Data
-Make sure your working directory is set for Part2 of this workshop, for example: setwd("C:/Users/gharrison/OneDrive - USDA/Documents/R scripts/RinRange_workshop_srm24/Part2")
 
 Now we need to pull in some polygons for our region of interest so that we can set a spatial boundaries on our data.  
 ```{r}
@@ -35,44 +39,41 @@ chihuahuan_desert <- read_sf("MapLayers/ChihuahuanDesert.shp")
 sandy_esg <- read_sf("MapLayers/SandyESG.shp")
 
 # extract data from LDC based on the chihuahuan_desert polygon
-data <- fetch_ldc_spatial(chihuahuan_desert,
-                          data_type = "indicators")
+data <- fetch_ldc_spatial(chihuahuan_desert, data_type = "indicators")
 head(data)
 ```
 
 ## Lets check in with the study area and make a map of our regions of interest.
-First lets make a map of the region of the boundaries of the chihuahuan desert within the US
+First lets make a map of the region of the boundaries of the chihuahuan desert within the US. To do this, we need to pull in a US state boundary. 
 ```{r}
-# Gather state boundaries using rnaturalearth package
-us_states <- rnaturalearth::ne_states(country = "united states of america", returnclass = "sf")
+# pull in US state boundaries
+usa <- st_as_sf(maps::map("state", fill=TRUE, plot =FALSE))
 
-# make a map using ggplot() with the geom_sf() function 
-us_state_map <- ggplot()+ 
-  geom_sf(data=us_states)
-#display the map 
-us_state_map
+# Generate a map from just the state outlines
+state_base_map <- ggplot(usa) +
+  geom_sf(color = "#2b2b2b", fill = "white", size=0.125)
+state_base_map
+```
 
-# this looks okay... we do not need alaska or Hawaii. Lets remove those states 
-# also change the mapping color aesetics 
-us_state_map_base_map <- ggplot()+
-  geom_sf(data=us_states %>%  filter(!name %in% c("Alaska", "Hawaii")),
-          fill = "white", color = "black")+
-  theme_minimal()
-us_state_map_base_map # looking better already 
-
+Good start, lets add the Chihuahan desert study area on this map. 
+Remember ggplot figures work like layers, so we can add the desert on top of our base map
+```{r}
 # lets add in the boundary for the Chihuahan desert 
 # add this on to our prior map
-us_state_map <- us_state_map_base_map +
-  geom_sf(data = chihuahuan_desert, aes(fill = "Chihuahuan Desert"))
-us_state_map
-
-# that seems find but I want the power to customize the color palette
-us_state_map <- us_state_map_base_map +
+state_map <- state_base_map +
+  geom_sf(data = chihuahuan_desert, aes(fill = "Chihuahuan Desert"))+ 
+  theme_minimal()
+state_map
+```
+Nice. Now let's use some customization within ggplot to adjust legend position and change colors
+```{r}
+us_state_map <- state_base_map +
   geom_sf(data = chihuahuan_desert, aes(fill = "Chihuahuan Desert")) + # alpha makes the shape transparent
   scale_fill_manual(values = "goldenrod1", guide = guide_legend(title = "Legend")) + 
   theme(legend.position = "top")
 us_state_map
 ```
+Awesome, now we have a starting map. Lets move on to working with the data. 
 
 Take a look at the LCD data and clean it up 
 ```{r}
@@ -92,16 +93,14 @@ We want to understand which sites might be susceptible to wind erosion.
 To do this, we took a subset (~600) of the points in the ecoregion and compared them with wind erosion models and determined that decreases in total foliar cover below 30% are associated with an increase in wind erosion risk. However, we do not want to apply the benchmark to the points used to develop the benchmark. So we will first remove the benchmark generation points. Then we will apply the 30% benchmark to these points. 
 
 ![](images/Establishing_benchmark.jpg) 
-
+pull in the benchmark development data
 ``` {r}
-# pull in the benchmark development data
 benchmark <- read.csv("benchmark_points.csv")
-
 head(benchmark)
 ```
 
 ## 3. Apply benchmark
-Start by removing the training benchmark data, and then score the plots based on if they are meeting or not meeting benchmarks
+Start by removing the training benchmark data
 ``` {r}
 # remove data that have been used in benchmarking
 nrow(data)
@@ -109,7 +108,9 @@ data <- data |> subset(!PrimaryKey %in% benchmark$PrimaryKey)
 
 # check total number of plots
 nrow(data)
-
+```
+Score score the plots based on if they are meeting or not meeting benchmarks
+``` {r}
 # Apply the benchmark of 30% to the Total Foliar Cover values
 data <- data |> 
   dplyr::mutate(evaluated = dplyr::case_when(
@@ -120,7 +121,7 @@ data <- data |>
 # there were some plots with NA in the TotalFoliarCover - we want to remove those since we cannot evaluate them for this benchmark
 ```
 
-Convert these data to spatial objects
+Convert these data to spatial objects so we can make maps and conduct spatial analyses
 To accomplish this, we will need specify a CRS (Coordinate reference system)
 [https://rspatial.org/raster/spatial/6-crs.html]
 ```{r}
@@ -134,22 +135,23 @@ data_sf <- sf::st_as_sf(data %>% subset(!is.na(Longitude_NAD83)),
 # save these data as a shapefile
 sf::st_write(data_sf, "ldc_data.shp", append=F) 
 ```
-
-Lets make another map with these points!
+We can add points to our base map with states
 ```{r}
 # recall study area map
 us_state_map
+```
+This map is great for providing context of our study are in the US.... but to see the plot points on a map we are going to need to zoom into New Mexico and AZ. To do that, we can filter the 'usa' data frame
+```{r}
+head(usa) # seems like the state name is in the ID column 
 
-
-# this map is great for providing context of our study are in the US.... but to see the plot points on a map we are going to need to zoom into New Mexico and AZ
 zoomed_state_map <- ggplot()+
-  geom_sf(data=us_states %>%  filter(name %in% c("New Mexico", "Arizona")),
+  geom_sf(data=usa %>%  dplyr::filter(ID %in% c("new mexico", "arizona")),
           fill = "white", color = "black")+
   theme_minimal()
 zoomed_state_map
-  
-  
-## add in the Chihuahan Desert and Sandy ESG map layers
+```
+Add in the Chihuahan Desert and Sandy ESG map layers to this zoomed in map
+```{r}
 zoomed_state_map <- zoomed_state_map+ 
   geom_sf(data = chihuahuan_desert, aes(fill = "Chihuahuan Desert"), alpha = 0.75) + # make semi transparent with alpha 
   geom_sf(data = sandy_esg, aes(fill = "Sandy ESG"), color = "gold4" )+ 
@@ -160,19 +162,17 @@ zoomed_state_map <- zoomed_state_map+
   theme(legend.position = "top")
 zoomed_state_map
 ```
-
-
-# challenge! 
+##### challenge!  
 # add the plot locations to the study area map
-consider changing dot size using size = function
+consider changing dot size using "size =" 
 ```{r}
 #zoomed_state_map_withPts <- zoomed_state_map + 
 ```
 
 
 
-Now we can see the plot locations, but I wonder where plots are that are meeting or not meeting th benchmark? 
-We can use the 'evaluated' column to change the dot color
+Now we can see the plot locations, but I wonder where plots are that are meeting or not meeting the benchmark? 
+We can change the color of each plot location based on the 'evaluated' column
 ```{r}
 # get the values in this column 
 summary(as.factor(data_sf$evaluated))
@@ -186,48 +186,62 @@ study_with_bench_eval <- zoomed_state_map +
           size = 0.75, 
           aes(color = evaluated)) +
   scale_color_manual(values = meeting_colors, 
-                     name = "Wind Erosion Benchmark") +  
-  theme(panel.border = element_blank(), 
-        plot.background = element_rect(fill = "white"))  # Set plot background to white
+                     name = "Wind Erosion Benchmark")
 
 # Display the map with adjusted point size and color
 study_with_bench_eval
 ```
 
-Now that we know where these points are, we can make some summary graphs to show the portion of the plots which are meeting this benchmark. 
+Now that we know where these points are, we can make some summary graphs to show the portion of the plots which are meeting this benchmark.
 
-For management purposes, we are going to focus on the NM portion of the Chihuahuan Desert and the Sandy Ecological Site Group within that area.
+For this, we are interested in understanding how many plots within the Chihuahuan Desert, the Sandy ESG, MLRA 42, and a long-term research site at the Jornada Experimental Range called "NWERN_JER"). 
 ``` {r}
-# Subset the data to points found in New Mexico
-nm_data <- data_sf |> subset(State == "NM")
-
-
 # Identify the membership of each plot within different polygons (Chihuahuan Desert, MLRA 42, SandyESG and a long-term research site at the Jornada Experimental Range called "NWERN_JER")
 # We know all the points are within the Chihuahaun desert, do create a col and fill all values with yes
 # sort plots by if they occur in MLRA42. If the value in mlrasym col is 42, put 'yes' in the new column called MLRA42
-nm_data <- nm_data |> 
+data_sf <- data_sf |> 
   dplyr::mutate(Chihuahuan_desert = "yes",
                 MLRA42 = dplyr::case_when(mlrarsym %in% "42"~ "yes"),
                 NWERN_JER = dplyr::case_when(ProjectKey %in% "NWERN_JER"~ "yes"))
-
-# we also want to know if the points falls within the Sandy ESG. We will use the st_within function 
-
+```
+we also want to know if the points falls within the Sandy ESG. We will use the st_within function 
+```{r}
 # create a col called SandyESG, where values correspond to if each row is within the SandyESG
 # Assuming data_sf and sandy_sf are sf objects
-nm_data$SandyESG <- sf::st_within(nm_data, sandy_esg_transformed)
-
-head(summary(nm_data$SandyESG), 20) # the values in this col are either 0 or 1
-
-# Convert the logical values to "Yes" or "No" if needed
-nm_data$SandyESG <- ifelse(nm_data$SandyESG, "yes", "No")
-head(summary(nm_data$SandyESG), 20)
-
+data_sf$SandyESG <- sf::st_within(data_sf, sandy_esg)
+```
+hmm seems like there is an issue about mismatching CRS
+```{r}
+# figure out the current crs for each data 
+print(st_crs(data_sf))
+print(st_crs(sandy_esg))
 ```
 
+Ah yes the crs for sandy_esg is WGS 84. Let's change that. 
+```{r}
+# Transform sandy_esg_transformed to have the same CRS as nm_data
+sandy_esg_transformed <-  sf::st_make_valid(sf::st_transform(sandy_esg, st_crs(data_sf)))
+
+# try again to assign values based on points, but use the transformed data
+data_sf$SandyESG <- sf::st_within(data_sf, sandy_esg_transformed)
+
+head(summary(data_sf$SandyESG), 20) # the values in this col are either 0 or 1
+
+# Convert the logical values to "Yes" or "No" if needed
+data_sf$SandyESG <- ifelse(data_sf$SandyESG, "yes", "No")
+head(summary(data_sf$SandyESG), 20)
+
+```
+Great. Now for each plot (row), we know if the plot occurs within the Chihuahan desert, Sandy ESG, MLRA 42, and in NWERN
+
+To prepare for plotting, we need to transform data from wide to long format using a pivot. 
 ```{r}
 # To faciliate plotting, it would be helpful if the data were long rather than wide.
-nm_data_long <- as.data.frame(nm_data) |>
-  tidyr::pivot_longer(cols = c("MLRA42","SandyESG", "NWERN_JER", "Chihuahuan_desert"),
+data_long <- as.data.frame(data_sf) |>
+  tidyr::pivot_longer(cols = c("MLRA42",
+                               "SandyESG", 
+                               "NWERN_JER", 
+                               "Chihuahuan_desert"),
                       names_to = "region",
                       values_to = "region_membership") |>
   subset(region_membership =="yes")|>
@@ -238,15 +252,20 @@ nm_data_long <- as.data.frame(nm_data) |>
                                  "Chihuahuan_desert" = "Ecoregion"))
 
 # We also need region to be a factor for easier plot formatting
-nm_data_long$region <- factor(nm_data_long$region,
-                              levels = c( "Site", "ESG","MLRA","Ecoregion"))
+data_long$region <- factor(data_long$region,
+                              levels = c( "Site", 
+                                          "ESG",
+                                          "MLRA",
+                                          "Ecoregion")
+                              )
 ```
 
 ### Plot the results
+# and complete a challenge
 ``` {r}
 # box plot
 benchmark_boxplot <- 
-  ggplot(nm_data_long |> 
+  ggplot(data_long |> 
            subset(Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
                                 TotalFoliarCover),
        aes(x = Year,
@@ -260,14 +279,17 @@ benchmark_boxplot <-
   ylab("Total foliar cover (%)")+
   guides(color=guide_legend(title="Benchmark status"))
 benchmark_boxplot
+```
 
-# CHALLENGE 
+###### CHALLENGE 
 # this looks good.. but the points are covering up the boxes. To make this easier to see, make the points semi transparents and wiggle (jitter) the points around
+```{r}
 #benchmark_boxplot_jittered <- 
-  
+```  
 # bar chart
+```{r}
 benchmark_barchart <- 
-  ggplot(nm_data_long |> 
+  ggplot(data_long |> 
            subset(Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
                                 TotalFoliarCover),
        aes(x = Year,
@@ -280,11 +302,12 @@ benchmark_barchart <-
   ylab("Proportion of plots")+
   guides(fill=guide_legend(title="Benchmark status"))
 benchmark_barchart
-
+```
 
 # summarize these data in a table 
-nm_data_summary <- 
-  nm_data_long |> 
+```{r}
+data_long_summary <- 
+  data_long |> 
   subset(Year %in% c("2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022") &
            TotalFoliarCover) |>
   dplyr::select(PrimaryKey, region, Year) |>
@@ -445,13 +468,29 @@ rap_cover<-
 rap_cover
 
 
-# add a line for 2015, which is the focus of our case study 
+# add a line for 2015, since the rest of our benchmark comparison focused on 2015-2022 
 rap_cover<- rap_cover+ 
   geom_vline(xintercept = as.Date("2015-01-01"), linetype = "dashed", 
              color = "black", size = 1)
 rap_cover
 
 ```
+## Challenge 
+For each year in the ROI, Calculate total  RAP cover of vegetation (AFG, PFG, SHR, TRE). Then apply our wind erosion benchmark year: determine the number of years that the total  vegetation cover is 70% or higher (meeting the benchmark), or lower (not meeting) 
+
+* Hint, you might need to use filters, groups and summarize/mutate functions to calculate vegetation cover. 
+```{r}
+
+
+```
+Answer: Between 1986 - 2022, annual average cover in the SandyESG was at least 30% total vegetation cover and was therefore meeting out wind erosion benchmark in 20 years. 17 years were not meeting the benchmark. 
+
+
+
+
+
+
+
 
 
 ### Make API request to get Standardized Precipitation-Evapotranspiration Index (SPEI) data from gridMET Drought.
@@ -463,68 +502,68 @@ Here, we will get histograms of 180-day SPEI drought data based on accepted drou
 NOTE: I've pre-run the fetching of the histogram data since it can be time-consuming to run live. Skip ahead to the next section to read-in CSVs of the drought data to produce the stacked bar chart.
 
 ```{r}
-# Generate date list to to extract statistics over
-start_year = 2015
-end_year = 2023
-yearlist = seq(from = start_year, to = end_year, by = 1)
-generate_dates <- function(year){
-  dates_year <- seq(from = as.Date(paste0(as.character(year), "/1/5")), to = as.Date(paste0(as.character(year), "/12/31")), by = '5 days')
-  return(c(as.character(dates_year))) }
-dates <- map(yearlist, generate_dates) |> 
-  flatten_chr()
-
-# Define Climate Engine API Point 
-# Documentation for this endpoint found here: https://docs.climateengine.org/docs/build/html/zonal_statistics.html#rst-zonal-stats-pixel-count-custom-asset
-endpoint <- 'zonal_stats/pixel_count/custom_asset'
-
-# Documentation on the gridMET Drought is available here: https://support.climateengine.org/article/45-gridmet-drought
-# API Documentation on the Rangeland Analysis Platform: https://docs.climateengine.org/docs/build/html/variables.html#rst-gridmet-drought
-dataset <- 'GRIDMET_DROUGHT'
-variable <- 'spei180d'
-
-# Generate dataframe of histograms
-get_drought_histogram <- function(date){
-
-  print(paste0('Running ', date))
-
-  # Create list of API parameters for request
-  params = list(
-    dataset = dataset,
-    variable = variable,
-    end_date = as.character(date),
-    area_reducer = 'mean',
-    asset_id = asset_id,
-    sub_choices = sub_choices,
-    filter_by = filter_by,
-    bins = '[-2, -1.5, -1.2,-0.7, -0.5, 0.5, 0.7, 1.2, 1.5, 2]')
-  
-  # Make API request and get data from response
-  data <- request(base_url = paste0(root_url, endpoint)) |>
-    req_url_query(query = !!!params) |>
-    req_headers(Authorization = key) |>
-    req_perform() |>
-    resp_body_json() |>
-    pluck(1)
-  
-  # Iterate over the SPEI histogram bins to produce dataframe of SPEI histograms
-  bins = names(data$spei180d)
-  row_df <- tibble('Date' = date)
-  for (bin in bins){
-    val = data$spei180d[bin][1] |> 
-      unlist() |> 
-      unname()
-    df = tibble(bin = val)
-    names(df) <- bin
-    row_df = bind_cols(row_df, df)}
-  
-  return(row_df) }
-
-spei_df <- map(dates, get_drought_histogram) |> 
-  bind_rows() %>%
-  mutate(across(everything(), replace_na, 0))
-
-# Optionally write out csv
-# write_csv(spei_df, paste0('data/', aoi_name, '_', variable, '_', as.character(start_year), '_', as.character(end_year), '.csv'))
+# # Generate date list to to extract statistics over
+# start_year = 2015
+# end_year = 2023
+# yearlist = seq(from = start_year, to = end_year, by = 1)
+# generate_dates <- function(year){
+#   dates_year <- seq(from = as.Date(paste0(as.character(year), "/1/5")), to = as.Date(paste0(as.character(year), "/12/31")), by = '5 days')
+#   return(c(as.character(dates_year))) }
+# dates <- map(yearlist, generate_dates) |> 
+#   flatten_chr()
+# 
+# # Define Climate Engine API Point 
+# # Documentation for this endpoint found here: https://docs.climateengine.org/docs/build/html/zonal_statistics.html#rst-zonal-stats-pixel-count-custom-asset
+# endpoint <- 'zonal_stats/pixel_count/custom_asset'
+# 
+# # Documentation on the gridMET Drought is available here: https://support.climateengine.org/article/45-gridmet-drought
+# # API Documentation on the Rangeland Analysis Platform: https://docs.climateengine.org/docs/build/html/variables.html#rst-gridmet-drought
+# dataset <- 'GRIDMET_DROUGHT'
+# variable <- 'spei180d'
+# 
+# # Generate dataframe of histograms
+# get_drought_histogram <- function(date){
+# 
+#   print(paste0('Running ', date))
+# 
+#   # Create list of API parameters for request
+#   params = list(
+#     dataset = dataset,
+#     variable = variable,
+#     end_date = as.character(date),
+#     area_reducer = 'mean',
+#     asset_id = asset_id,
+#     sub_choices = sub_choices,
+#     filter_by = filter_by,
+#     bins = '[-2, -1.5, -1.2,-0.7, -0.5, 0.5, 0.7, 1.2, 1.5, 2]')
+#   
+#   # Make API request and get data from response
+#   data <- request(base_url = paste0(root_url, endpoint)) |>
+#     req_url_query(query = !!!params) |>
+#     req_headers(Authorization = key) |>
+#     req_perform() |>
+#     resp_body_json() |>
+#     pluck(1)
+#   
+#   # Iterate over the SPEI histogram bins to produce dataframe of SPEI histograms
+#   bins = names(data$spei180d)
+#   row_df <- tibble('Date' = date)
+#   for (bin in bins){
+#     val = data$spei180d[bin][1] |> 
+#       unlist() |> 
+#       unname()
+#     df = tibble(bin = val)
+#     names(df) <- bin
+#     row_df = bind_cols(row_df, df)}
+#   
+#   return(row_df) }
+# 
+# spei_df <- map(dates, get_drought_histogram) |> 
+#   bind_rows() %>%
+#   mutate(across(everything(), replace_na, 0))
+# 
+# # Optionally write out csv
+# # write_csv(spei_df, paste0('data/', aoi_name, '_', variable, '_', as.character(start_year), '_', as.character(end_year), '.csv'))
 ```
 
 
