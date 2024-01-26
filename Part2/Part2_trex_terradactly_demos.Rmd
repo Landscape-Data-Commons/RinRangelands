@@ -7,7 +7,6 @@ output: html_document
 ###########################
 ## TREX
 # Accessing public data with trex (Terrestrial Rangeland data EXtraction) '
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -24,15 +23,15 @@ if (!"trex" %in% installed.packages()) {
 boundary_polygon <- sf::st_transform(x = sf::st_read(dsn = "trex",
                                                      layer = "jer_boundary"),
                                      crs = "+proj=longlat +ellps=GRS80 +no_defs")
-boundary_centroid <- as.vector(sf::st_coordinates(sf::st_centroid(x = boundary_polygon)))
-boundary_bb <- sf::st_bbox(obj = boundary_polygon)
-ggmap::register_stadiamaps(key = "d5cfeb13-f1d1-4f2b-9a7f-433e6a3cde24")
-base_layer <- ggmap::get_stadiamap(bbox = c("left" = unname(boundary_bb$xmin - 0.08),
-                                            "bottom" = unname(boundary_bb$ymin - 0.08),
-                                            "right" = unname(boundary_bb$xmax + 0.08),
-                                            "top" = unname(boundary_bb$ymax + 0.08)),
-                                   zoom = 11,
-                                   maptype = "stamen_terrain_background")
+# boundary_centroid <- as.vector(sf::st_coordinates(sf::st_centroid(x = boundary_polygon)))
+# boundary_bb <- sf::st_bbox(obj = boundary_polygon)
+# ggmap::register_stadiamaps(key = "d5cfeb13-f1d1-4f2b-9a7f-433e6a3cde24")
+# base_layer <- ggmap::get_stadiamap(bbox = c("left" = unname(boundary_bb$xmin - 0.08),
+#                                             "bottom" = unname(boundary_bb$ymin - 0.08),
+#                                             "right" = unname(boundary_bb$xmax + 0.08),
+#                                             "top" = unname(boundary_bb$ymax + 0.08)),
+#                                    zoom = 11,
+#                                    maptype = "stamen_terrain_background")
 ```
 
 ## Overview
@@ -53,18 +52,31 @@ A critical reference for working with the LDC API is the [offical documentation]
 The function `fetch_ldc_spatial()` was written to streamline querying the LDC using polygons. It compares your polygon(s) against the data locations and returns the requested data type associated with the locations falling within the polygon(s).
 
 For this example, we'll use the Jornada Experimental Range (JER) in southern New Mexico, shown in the map below.
-```{r map_basic, echo=FALSE, message=FALSE, warning=FALSE}
-ggmap::ggmap(ggmap = base_layer) +
-  ggplot2::geom_sf(data = boundary_polygon,
-                   fill = "burlywood1",
-                   alpha = 0.2,
-                   inherit.aes = FALSE) +
-  ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
-                 panel.grid = ggplot2::element_blank(),
-                 axis.title = ggplot2::element_blank(),
-                 axis.ticks = ggplot2::element_blank(),
-                 axis.text = ggplot2::element_blank())
+
+<br>
+
+```{r map_basic, out.height='300px', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+# ggmap::ggmap(ggmap = base_layer) +
+#   ggplot2::geom_sf(data = boundary_polygon,
+#                    fill = "burlywood1",
+#                    alpha = 0.2,
+#                    inherit.aes = FALSE) +
+#   ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+#                  panel.grid = ggplot2::element_blank(),
+#                  axis.title = ggplot2::element_blank(),
+#                  axis.ticks = ggplot2::element_blank(),
+#                  axis.text = ggplot2::element_blank(),
+#                  plot.margin=grid::unit(c(0,0,0,0), "mm"))
+# 
+# ggplot2::ggsave(filename = "jer_map_20240126.png",
+#                 device = "png",
+#                 height = 500,
+#                 units = "px")
+
+knitr::include_graphics(path = "images/jer_map_20240126.png")
 ```
+
+<br>
 
 Because we've already loaded the JER boundary polygon as an sf polygon object using `sf::st_read()` and that's what `fetch_ldc_spatial()` expects, we can easily ask for data from within that polygon.
 As a first example, we'll simply ask for the header table, which contains the most basic information about the sampling locations, importantly their PrimaryKeys (which are unique to each location) and their coordinates.
@@ -86,6 +98,8 @@ kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(jer_heade
                        width = "100%")
 ```
 
+<br>
+
 The header table is nice, but is usually just a starting point or used specifically for map making. If you wanted to use the headers for anything spatial, you'd need to convert it into an sf points object.
 
 ``` {r headers_to_points}
@@ -99,23 +113,30 @@ jer_points <-  sf::st_as_sf(x = jer_headers,
                                        "Latitude_NAD83"),
                             crs = 4269)
 ```
-```{r map_points, echo=FALSE, message=FALSE, warning=FALSE}
-ggmap::ggmap(ggmap = base_layer) +
-  ggplot2::geom_sf(data = boundary_polygon,
-                   fill = "burlywood1",
-                   alpha = 0.2,
-                   inherit.aes = FALSE) +
-  ggplot2::geom_sf(data = jer_points,
-                   color = "white",
-                   fill = "darkorange1",
-                   shape = 21,
-                   size = 3,
-                   inherit.aes = FALSE) +
-  ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
-                 panel.grid = ggplot2::element_blank(),
-                 axis.title = ggplot2::element_blank(),
-                 axis.ticks = ggplot2::element_blank(),
-                 axis.text = ggplot2::element_blank())
+```{r map_points, out.height='300px', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+# ggmap::ggmap(ggmap = base_layer) +
+#   ggplot2::geom_sf(data = boundary_polygon,
+#                    fill = "burlywood1",
+#                    alpha = 0.2,
+#                    inherit.aes = FALSE) +
+#   ggplot2::geom_sf(data = jer_points,
+#                    color = "white",
+#                    fill = "darkorange1",
+#                    shape = 21,
+#                    size = 1,
+#                    inherit.aes = FALSE) +
+#   ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+#                  panel.grid = ggplot2::element_blank(),
+#                  axis.title = ggplot2::element_blank(),
+#                  axis.ticks = ggplot2::element_blank(),
+#                  axis.text = ggplot2::element_blank())
+# 
+# ggplot2::ggsave(filename = "jer_with_ldc_points_map_20240126.png",
+#                 device = "png",
+#                 height = 500,
+#                 units = "px")
+
+knitr::include_graphics(path = "images/jer_with_ldc_points_map_20240126.png")
 ```
 
 However, the headers on their own aren't very useful. Luckily, we can also use `fetch_ldc_spatial()` to grab other kinds of data from the LDC associated with our polygon, including the already-computed standard AIM indicators and raw data from data collection methods like Line-Point Intercept, Gap Intercept, Soil Aggregate Stability, Vegetation Height, and Species Richness.
@@ -146,6 +167,7 @@ kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(jer_indic
                        width = "100%")
 ```
 
+<br>
 
 ``` {r jer_lpi_table, echo=FALSE}
 kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(jer_lpi),
@@ -259,6 +281,8 @@ kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(nm_north_
                        width = "100%")
 ```
 
+<br>
+
 ``` {r chaining_ldc_queries_mlra, warning=FALSE}
 # In order to get soil stability data for just the low-cover parts of MLRA 036,
 # we can start by grabbing the indicator data for the MLRA. We can use the
@@ -293,7 +317,7 @@ kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(mlra_036_
 ## Querying EDIT
 Due to the way that the EDIT API is implemented, it can't be queried in exactly the same way as the LDC, so it has its own functions. The core is `fetch_edit()` which returns the data matching the request. Because of the way that EDIT receives data requests through its API, you need to tell `fetch_edit()` which Major Land Resource Area (MLRA) or Areas that you're asking for data from. If you are unsure of valid MLRAs, you can always use `fetch_mlra_codes()` for a full list. If you have specific ecological site IDs you're wanting to retrieve data for, the MLRA is part of those, e.g., R**036X**B006NM.
 
-### Getting details
+### Getting the basics
 EDIT serves out ecological site information across several tables, including climatic, landform, physiographic, production, overstory, state and transition, and more. In order to retrieve data from one, you must specify the MLRA and the table.
 
 ``` {r fetch_edit, warning=FALSE}
@@ -313,29 +337,58 @@ mlra_036x_042b_ecosites <- trex::fetch_edit(mlra = c("036X", "042B"),
 mlra_036x_042b_climate <- trex::fetch_edit(mlra = c("036X", "042B"),
                                            data_type = "climate")
 ```
+``` {r mlra_036x_042b_ecosites_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(mlra_036x_042b_ecosites),
+                                                              format = "html",
+                                                              caption = "The first few rows of ecological site results for ecological sites in MLRAs 036X and 042B"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
 
+<br>
+
+``` {r mlra_036x_042b_climate_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(mlra_036x_042b_climate),
+                                                              format = "html",
+                                                              caption = "The first few rows of climate results for ecological sites in MLRAs 036X and 042B"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
+
+### Using key values
 It may be that you're trying to identify which ecological site data likely came from. In those cases, you can use "keys" to ask for only data associated with particular values. For example, you may have data from a sampling location where the slope was 7% and you can query EDIT for only data associated with slopes between 5% and 10% to narrow down the possible ecological sites.
 
 ``` {r fetch_edit_slope, warning=FALSE}
 gently_sloped_ecosites <- trex::fetch_edit(mlra = c("036X", "042B"),
                                            data_type = "ecosites",
+                                           # This is a special case where the
+                                           # function is expecting this format
+                                           # to define a range of values, in this
+                                           # case 5 to 10
                                            keys = "5:10",
                                            key_type = "slope")
 ```
+``` {r gentle_slopes_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(gently_sloped_ecosites),
+                                                              format = "html",
+                                                              caption = "The first few rows of ecological site results for ecological sites with slopes between 5 and 10%"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
 
+<br>
 
+Unlike with the LDC, you can't only query using key values for just any variable. There are specific variables that the function can handle: precipitation, frost free days, elevation, slope, landform, parent material origin, parent material kind, or surface texture.
 
+This means that if you want information about a particular ecological site, you can't ask the API for only the relevant data. Instead, you ask for the data in the MLRA that the ecological site belongs to and then keep only the data you need.
 
+## Summary
+You may want to programmatically retrieve data from the LDC or EDIT, in which case you can use trex functions to do so. For the LDC, you can ask for data using polygons, ecological site IDs, or by values in the data tables. For EDIT, you can ask for data by MLRA or by certain values in data tables.
 
-
-
-
-##############################################################################
-# END TREX DEMO 
-###############################################################################
-
-
-### terradactyl
+# TERRADACTYL
 ## Using terradactyl to Calculate Indicators of Rangeland Health and Conditions
 
 ```{r setup, include=FALSE}
