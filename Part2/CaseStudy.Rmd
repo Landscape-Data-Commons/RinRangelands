@@ -1,7 +1,7 @@
 ---
 title: 'Case Study: How Does Drought Impact Wind Erosion Risk?'
 author: "Sarah McCord, Eric Jensen"
-date: "2023-11-30"
+date: "2024-01-26"
 output: html_document
 ---
 ```{r setup, include=FALSE}
@@ -10,14 +10,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Overview
 
-Now we will use all of the skills we have learned in this workshop in a real world case study. This example walks through using R and publicly available datasets to examine how drought is influencing wind erosion in the Chihuahuan Desert. Our goal is to reproduce Figure 4 from McCord et al. 2024 (***https://doi.org/10.1002/ael2.20120***). First, we will query the Landscape Data Commons for data that fall within the Chihuahuan Desert ecoregion. Then, we will use these data to set a benchmark of expected wind erosion risk in the Chihuahuan Desert. With this benchmark in place, we will apply it to the monitoring data in the Landscape Data Commons and compare those results at multiple spatial scales. Finally, we will incorporate drought and remote-sensing based fractional cover data, to provide additional context to the field based monitoring data.
+Now we will use all of the skills we have learned in this workshop in a real world case study. This example walks through using R and publicly available datasets to examine how drought is influencing wind erosion in the Chihuahuan Desert. Our goal is to reproduce Figure 4 from McCord et al. 2023 (***https://doi.org/10.1002/ael2.20120***). First, we will query the Landscape Data Commons for data that fall within the Chihuahuan Desert ecoregion. Then, we will use these data to set a benchmark of expected wind erosion risk in the Chihuahuan Desert. With this benchmark in place, we will apply it to the monitoring data in the Landscape Data Commons and compare those results at multiple spatial scales. Finally, we will incorporate drought and remote-sensing based fractional cover data, to provide additional context to the field based monitoring data.
 
 ![](images/benchmark_combined_figure.png) 
 
 Set your working directory 
-make sure it ends in Part 2
+make sure it ends in Part 2. If you tab over with a "" Rstudio will help you set it. 
 ```{r}
-setwd("C:/Users/gharrison/OneDrive - USDA/Documents/R scripts/RinRange_workshop_srm24/Part2")
+getwd() # check your current working drive
+# setwd("") # change this if needed
 ```
 
 Library the packages we will use in this demo
@@ -28,6 +29,7 @@ library(sf) # for processing spatial data
 library(httr2) # for Climate Engine API requests
 library(mapview) # for visualizing spatial data
 library(ggpubr) # for combining multiple ggplot objects
+library(maps)
 ```
 
 ## 1. Prepare Data
@@ -261,7 +263,8 @@ data_long$region <- factor(data_long$region,
 ```
 
 ### Plot the results
-# and complete a challenge
+# and complete a challenge. 
+# We subset the data to 2015-2022 because that is when we have a sufficient sample size
 ``` {r}
 # box plot
 benchmark_boxplot <- 
