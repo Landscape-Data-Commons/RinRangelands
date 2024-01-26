@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 # We'll need these installed from CRAN
-required_packages <- c("ggplot2", "sf", "remotes", "ggmap")
+required_packages <- c("ggplot2", "sf", "remotes", "ggmap", "knitr", "kableExtra")
 install.packages(required_packages[!required_packages %in% installed.packages()])
 
 # And trex if it isn't installed yet, make sure that it is
@@ -127,7 +127,21 @@ jer_lpi <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
                                    # we'll still get all the data.
                                    take = 5000)
 ```
-
+``` {r jer_indicator_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(jer_indicators),
+                                                              format = "html",
+                                                              caption = "The indicator results for the Jornada Experimental Range"),
+                                                 bootstrap_options = "striped"),
+                       height = "400px",
+                       width = "100%")
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(jer_lpi),
+                                                              format = "html",
+                                                              caption = "The raw LPI data results for the Jornada Experimental Range"),
+                                                 bootstrap_options = "striped"),
+                       height = "400px",
+                       width = "100%")
+```
+                       
 ### Retrieving data associated with ecological sites using fetch_ldc_ecosite()
 Another way to ask for data from the LDC is by ecological site ID with `fetch_ldc_ecosite()`. This function is just a convenient wrapper that queries to find *all* the PrimaryKey values associated with the requested ecological site IDs in the header table and then queries the data table with those PrimaryKey values. The end result is that you can get data by ecological site from data tables that don't include ecological site IDs.
 
@@ -136,8 +150,10 @@ Another way to ask for data from the LDC is by ecological site ID with `fetch_ld
 # locations that were identified as falling in the ecological sites R036XB006NM
 # and R036XB007NM which are found in and around the San Luis Valley in northern
 # New Mexico.
-ecosite_gap <- trex::fetch_ldc_ecosite(keys = c("R036XB006NM", "R036XB007NM"),
-                                       data_type = "gap")
+ecosites_gap <- trex::fetch_ldc_ecosite(keys = c("R036XB006NM", "R036XB007NM"),
+                                        data_type = "gap")
+
+dplyr::glimpse(ecosites_gap)
 ```
 
 <<<<INSERT TABLE>>>>
@@ -154,6 +170,9 @@ The core function for querying the LDC is `fetch_ldc()`. It's used for building 
 nm_co_indicators <- trex::fetch_ldc(keys = c("NM", "CO"),
                                     key_type = "State",
                                     data_type = "indicators")
+
+# So, we should have plots only from those two states now
+table(nm_co_indicators$State)
 ```
 
 Currently, keys must be discrete values, so there's no way to ask for something like "sampling locations with greater than 50% bare ground" with numeric values. The best approach to approximate that is to grab more data than you may actually need and then keeping only the data that match your criteria, e.g., retrieving all New Mexico data then using something like `dplyr::filter()` to keep only records where bare ground was greater than 50%. The section "Chaining queries" addresses that.
@@ -173,12 +192,14 @@ mlra_036x_headers <- trex::fetch_ldc(keys = "036X",
                                      # need an *exact* match it'll find all the
                                      #data where EcologicalSiteID includes "036x"
                                      exact_match = FALSE)
+
+knitr::kable(head(mlra_036x_headers))
 ```
 
 ### Chaining queries
 One of the challenges in asking for data by keys is that you can only use variables that occur in the table being queried. This makes it trickier to do things like getting raw LPI data for the state of New Mexico north of Taos or the raw soil stability data for places in MLRA 036 with foliar cover less than 15%.
 
-The one variable that appears in every data table is PrimaryKey and so we can use that to chain queries together to get what we want. This is what `fetch_ldc_spatial90` and `fetch_ldc_ecosite()` are doing behind the scenes: using a query to get PrimaryKey values and using those to submit another query for another data table.
+The one variable that appears in every data table is PrimaryKey and so we can use that to chain queries together to get what we want. This is what `fetch_ldc_spatial()` and `fetch_ldc_ecosite()` are doing behind the scenes: using a query to get PrimaryKey values and using those to submit another query for another data table.
 
 ``` {r chaining_ldc_queries_northern_nm, warning=FALSE}
 # In order to get LPI data for the state of New Mexico, we need all the PrimaryKey
@@ -204,6 +225,8 @@ nm_north_lpi <- trex::fetch_ldc(keys = nm_north_primarykeys,
                                 key_type = "PrimaryKey",
                                 data_type = "lpi",
                                 take = 5000)
+
+knitr::kable(head(nm_north_lpi))
 ```
 
 ``` {r chaining_ldc_queries_mlra, warning=FALSE}
@@ -227,6 +250,8 @@ mlra_036_lowcover_soil <- trex::fetch_ldc(keys = mlra_036_lowcover_primarykeys,
                                           key_type = "PrimaryKey",
                                           data_type = "soilstability",
                                           take = 5000)
+
+knitr::kable(head(mlra_036_lowcover_soil))
 ```
 
 ## Querying EDIT
