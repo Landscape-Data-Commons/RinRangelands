@@ -134,7 +134,6 @@ Important: You must either use single forward slashes or double backslashes in t
 setwd("C:/Users/Aosmith/R workshops/r-basics-workshop") OR
 setwd("C:\\Users\\Aosmith\\R workshops\\r-basics-workshop")
 ```{r}
-setwd("C:/Users/Leah/OneDrive - University of Idaho/Other/Tidyverse_workshop/2024")
 #customize to your own file path
 setwd("C:/Users/gharrison/OneDrive - USDA/Documents/R scripts/RinRange_workshop_srm24/Download_1.23.2024/RinRangelands-main (2)/RinRangelands-main/Part1")
 ```
@@ -147,7 +146,7 @@ let's get started actually working with the data
 First step is to import the data using readr (a package within the tidyverse) 
 using the *read_csv()* function 
 These data were obtained from the Landscape Data Commons, which we will talk about more in Part 2 
-#### Georgia maybe add a little discussion of the climate data in here too ####
+
 ```{r}
 indicator_data = read_csv("RinRange_newID_indicator.csv")
 climate_data = read_csv("RinRange_Pt1Data_climate_mlra42.csv")
@@ -313,12 +312,12 @@ It is important to have tidy data to work with. Tidy data sets meet three interr
   
 Our indicator_data does meet these rules because each variable has its own column, all observations have its own row, and each value has its own cell. However, our climate_data does not meet these rules because observation of interest (Ecological Site ID) has multiple rows and each variable of interest (Property) has only one column. To make this tidy data we want to create a wide data set so that there is columns for each of the properties associated with each ecological site (mean annual precipitation, frost free days, and freeze free days). We do this with the function pivot_wider().
 ```{r}
-climate_data_renamed = climate_data %>% pivot_wider(names_from = "Property", values_from = "Average")
+climate_data_wide = climate_data %>% pivot_wider(names_from = "Property", values_from = "Average")
 ```
   
 To convert the data back to a long data set we use the function pivot_longer().  
 ```{r}
-climate_data_long = climate_data_renamed %>% pivot_longer(c("mean annual precipitation", "frost free days", "freeze free days"), names_to = "Property", values_to = "Average")%>% distinct()
+climate_data_long = climate_data_wide %>% pivot_longer(c("mean annual precipitation", "frost free days", "freeze free days"), names_to = "Property", values_to = "Average")%>% distinct()
 ```
 
 We can also rename columns with the function 'rename':
@@ -350,45 +349,28 @@ The functions we use to join two or more data sets are called joins. There are s
 
 For our data sets, because there is indicator data we do not have the climate data for, and we have climate data that does not match a plot. We want to use an inner_join. 
 ```{r}
-all_data = indicator_data %>% inner_join(climate_data_renamed, by = c("corrected_ecosite_id" = "Ecological site legacy ID"))
-view(all_data)
+final_data = indicator_data %>% inner_join(climate_data_wide, by = c("corrected_ecosite_id" = "Ecological site legacy ID"))
+view(final_data)
 ```
 
 
-# All Together  
-  
-Don't forget that you can pipe many of these functions together. For fun, here is a way to get the same data set with just one long pipe.  
-```{r}
-all_data = indicator_data %>% mutate(Year = as.factor(year(DateVisited))) %>%
-  inner_join(climate_data %>% 
-               pivot_wider(names_from = "Property", values_from = "Average"), 
-             by = c("corrected_ecosite_id" = "Ecological site legacy ID"))
-```
-  
-  
 # Summaries  
   
 Now that we have tidy and cleaned data we can do some analysis with it. One of the most basic things we may want to do is summarize the data. The function to do this is summarise(). We often pair this function with the function group_by() which allows us to get grouped summaries.  
   
 For our data, lets group by year and calculate mean heights
 ```{r}
-herb_height_year = all_data %>% 
+herb_height_year = final_data %>% 
                     group_by(Year) %>%
                     summarise(Herb_Height= mean(Hgt_Herbaceous_Avg))
 
 herb_height_year
 ```
+
 # Challenge: 
 Summarize mean, minimum and maximum annual grass cover by MLRA
 ```{r}
-ag_mlra_summary = all_data %>% 
-```
-
-
-
-## Save the data in final form for vizualizations
-```{r}
-final_data <- all_data
+ag_mlra_summary = final_data %>% 
 ```
 
 
