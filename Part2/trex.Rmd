@@ -74,7 +74,14 @@ As a first example, we'll simply ask for the header table, which contains the mo
 jer_headers <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
                                        data_type = "header")
 ```
-<<<INSERT THE TABLE HERE, NICELY FORMATTED>>>
+``` {r jer_header_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(jer_headers),
+                                                              format = "html",
+                                                              caption = "The first few rows of header results for the Jornada Experimental Range"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
 
 The header table is nice, but is usually just a starting point or used specifically for map making. If you wanted to use the headers for anything spatial, you'd need to convert it into an sf points object.
 
@@ -130,15 +137,19 @@ jer_lpi <- trex::fetch_ldc_spatial(polygons = boundary_polygon,
 ``` {r jer_indicator_table, echo=FALSE}
 kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(jer_indicators),
                                                               format = "html",
-                                                              caption = "The indicator results for the Jornada Experimental Range"),
+                                                              caption = "The first few rows of indicator results for the Jornada Experimental Range"),
                                                  bootstrap_options = "striped"),
-                       height = "400px",
+                       height = "300px",
                        width = "100%")
+```
+
+
+``` {r jer_lpi_table, echo=FALSE}
 kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(jer_lpi),
                                                               format = "html",
-                                                              caption = "The raw LPI data results for the Jornada Experimental Range"),
+                                                              caption = "The first few rows of raw LPI data results for the Jornada Experimental Range"),
                                                  bootstrap_options = "striped"),
-                       height = "400px",
+                       height = "300px",
                        width = "100%")
 ```
                        
@@ -152,11 +163,15 @@ Another way to ask for data from the LDC is by ecological site ID with `fetch_ld
 # New Mexico.
 ecosites_gap <- trex::fetch_ldc_ecosite(keys = c("R036XB006NM", "R036XB007NM"),
                                         data_type = "gap")
-
-dplyr::glimpse(ecosites_gap)
 ```
-
-<<<<INSERT TABLE>>>>
+``` {r ecosites_gap_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(ecosites_gap),
+                                                              format = "html",
+                                                              caption = "The first few rows of raw gap data results for the ecological sites R036XB006NM and R036XB007NM"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
 
 ### Retrieving data using key values using fetch_ldc()
 The core function for querying the LDC is `fetch_ldc()`. It's used for building all the LDC API queries, including those being sent by `fetch_ldc_spatial()` and `fetch_ldc_ecosite()` and, while not quite as flexible as hand writing the queries, is much more convenient. The basic idea is that you specify the data table you want data from and then values to restrict the results you get back, like applying a filter on the server side. The values are referred to as "keys" and can be applied to any variable in the table you're asking for data from.
@@ -192,8 +207,14 @@ mlra_036x_headers <- trex::fetch_ldc(keys = "036X",
                                      # need an *exact* match it'll find all the
                                      #data where EcologicalSiteID includes "036x"
                                      exact_match = FALSE)
-
-knitr::kable(head(mlra_036x_headers))
+```
+``` {r mlra036x_header_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(mlra_036x_headers),
+                                                              format = "html",
+                                                              caption = "The first few rows of header results for the MLRA code 036X"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
 ```
 
 ### Chaining queries
@@ -225,8 +246,14 @@ nm_north_lpi <- trex::fetch_ldc(keys = nm_north_primarykeys,
                                 key_type = "PrimaryKey",
                                 data_type = "lpi",
                                 take = 5000)
-
-knitr::kable(head(nm_north_lpi))
+```
+``` {r northnm_lpi_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(nm_north_lpi),
+                                                              format = "html",
+                                                              caption = "The first few rows of LPI results for New Mexico north of Taos"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
 ```
 
 ``` {r chaining_ldc_queries_mlra, warning=FALSE}
@@ -250,8 +277,14 @@ mlra_036_lowcover_soil <- trex::fetch_ldc(keys = mlra_036_lowcover_primarykeys,
                                           key_type = "PrimaryKey",
                                           data_type = "soilstability",
                                           take = 5000)
-
-knitr::kable(head(mlra_036_lowcover_soil))
+```
+``` {r mlra036_lowcover_soil_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(mlra_036_lowcover_soil),
+                                                              format = "html",
+                                                              caption = "The first few rows of soil stability results for low-cover plots in the MLRA code 036"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
 ```
 
 ## Querying EDIT
