@@ -135,9 +135,9 @@ setwd("C:/Users/Aosmith/R workshops/r-basics-workshop") OR
 setwd("C:\\Users\\Aosmith\\R workshops\\r-basics-workshop")
 ```{r}
 #customize to your own file path
-setwd("C:/Users/gharrison/OneDrive - USDA/Documents/R scripts/RinRange_workshop_srm24/Download_1.23.2024/RinRangelands-main (2)/RinRangelands-main/Part1")
+setwd("RinRangelands-main/Part1")
 ```
-
+Or follow instructions on the github home page to directly access the repo
 Make sure your directory ends in Part1
 
 
