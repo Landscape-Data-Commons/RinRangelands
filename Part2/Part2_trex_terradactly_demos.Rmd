@@ -423,7 +423,6 @@ Lets take a look at the same data in tall and wide formats from the Line-Point I
 
 ```{r include=FALSE}
 path_parent <- "C:/Users/jrbrehm/Documents/GitHub/workspace/SRM 2024 terradactyl demo/"
-#path_parent <- "C:/Users/gharrison/OneDrive - USDA/Documents/R scripts/RinRange_workshop_srm24/RinRangelands-main_1.26.2024/RinRangelands-main/Part2/"
 
 path_wide <- file.path(path_parent, "Raw terradat tables")
 path_tall <- file.path(path_parent, "Tall tables")
@@ -488,7 +487,6 @@ library(tidyverse)
 library(terradactyl)
 
 path_parent <- "C:/Users/jrbrehm/Documents/GitHub/workspace/SRM 2024 terradactyl demo/"
-#path_parent <- "C:/Users/gharrison/OneDrive - USDA/Documents/R scripts/RinRange_workshop_srm24/RinRangelands-main_1.26.2024/RinRangelands-main/Part2/"
 
 path_wide <- file.path(path_parent, "Raw terradat tables")
 path_tall <- file.path(path_parent, "Tall tables")
