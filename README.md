@@ -14,7 +14,7 @@
 Install the current versions of R and R Studio on your computer if you haven’t already. You can download R from CRAN and the free version of RStudio from their site. 
 https://posit.co/download/rstudio-desktop/
 
-##Install workshop data via Rstudio
+## Install workshop data via Rstudio
 1. In RStudio select "File" then "New Project"
 2. Select "Version Control".
 3. Copy "https://github.com/Landscape-Data-Commons/RinRangelands" into the repository URL.
