@@ -24,15 +24,6 @@ if (!"trex" %in% installed.packages()) {
 boundary_polygon <- sf::st_transform(x = sf::st_read(dsn = "trex",
                                                      layer = "jer_boundary"),
                                      crs = "+proj=longlat +ellps=GRS80 +no_defs")
-# boundary_centroid <- as.vector(sf::st_coordinates(sf::st_centroid(x = boundary_polygon)))
-# boundary_bb <- sf::st_bbox(obj = boundary_polygon)
-# ggmap::register_stadiamaps(key = "d5cfeb13-f1d1-4f2b-9a7f-433e6a3cde24")
-# base_layer <- ggmap::get_stadiamap(bbox = c("left" = unname(boundary_bb$xmin - 0.08),
-#                                             "bottom" = unname(boundary_bb$ymin - 0.08),
-#                                             "right" = unname(boundary_bb$xmax + 0.08),
-#                                             "top" = unname(boundary_bb$ymax + 0.08)),
-#                                    zoom = 11,
-#                                    maptype = "stamen_terrain_background")
 ```
 
 ## Overview
@@ -57,23 +48,6 @@ For this example, we'll use the Jornada Experimental Range (JER) in southern New
 <br>
 
 ```{r map_basic, out.height='300px', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
-# ggmap::ggmap(ggmap = base_layer) +
-#   ggplot2::geom_sf(data = boundary_polygon,
-#                    fill = "burlywood1",
-#                    alpha = 0.2,
-#                    inherit.aes = FALSE) +
-#   ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
-#                  panel.grid = ggplot2::element_blank(),
-#                  axis.title = ggplot2::element_blank(),
-#                  axis.ticks = ggplot2::element_blank(),
-#                  axis.text = ggplot2::element_blank(),
-#                  plot.margin=grid::unit(c(0,0,0,0), "mm"))
-# 
-# ggplot2::ggsave(filename = "jer_map_20240126.png",
-#                 device = "png",
-#                 height = 500,
-#                 units = "px")
-
 knitr::include_graphics(path = "images/jer_map_20240126.png")
 ```
 
@@ -115,28 +89,6 @@ jer_points <-  sf::st_as_sf(x = jer_headers,
                             crs = 4269)
 ```
 ```{r map_points, out.height='300px', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
-# ggmap::ggmap(ggmap = base_layer) +
-#   ggplot2::geom_sf(data = boundary_polygon,
-#                    fill = "burlywood1",
-#                    alpha = 0.2,
-#                    inherit.aes = FALSE) +
-#   ggplot2::geom_sf(data = jer_points,
-#                    color = "white",
-#                    fill = "darkorange1",
-#                    shape = 21,
-#                    size = 1,
-#                    inherit.aes = FALSE) +
-#   ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
-#                  panel.grid = ggplot2::element_blank(),
-#                  axis.title = ggplot2::element_blank(),
-#                  axis.ticks = ggplot2::element_blank(),
-#                  axis.text = ggplot2::element_blank())
-# 
-# ggplot2::ggsave(filename = "jer_with_ldc_points_map_20240126.png",
-#                 device = "png",
-#                 height = 500,
-#                 units = "px")
-
 knitr::include_graphics(path = "images/jer_with_ldc_points_map_20240126.png")
 ```
 
