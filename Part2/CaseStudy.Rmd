@@ -455,8 +455,7 @@ Note: We could also visualize the data as a stacked bar chart, similar to with t
 
 ```{r}
 # Make a simple plot of the time-series data
-rap_cover<- 
-  ggplot(data = rap_df)+
+rap_cover <- ggplot(data = rap_df)+
   geom_line(mapping = aes(x = Date, y = Value, colour = Variable), size =2)+
   labs(title = paste0('Rangeland Analysis Platform (RAP) Vegetation Cover for ', 
                       aoi_name |> str_replace('_', ' ')), y = 'Fractional cover (%)') +
@@ -582,7 +581,7 @@ variable <- 'spei180d'
 spei_df <- read_csv(paste0('data/', aoi_name, '_', variable, '_', as.character(start_year), '_', as.character(end_year), '.csv'))
 
 # Pivot spei_df longer for visualizing, select drought categories, and calculate percent of area in each category
-spei_df <- spei_df |> 
+spei_df_plot <- spei_df |> 
   select(-'null') |> # remove null column resulting from gridMET drought data issue
   pivot_longer(!Date, names_to = 'Category', values_to = 'Count') |> # pivot from wide to long dataframe
   group_by(Date) |>
@@ -594,7 +593,7 @@ spei_df <- spei_df |>
 
 
 # make a figure to display SPEI in the sandy ESG
-spei_fig <- ggplot(spei_df, mapping = aes(x = Date, y = Percent, fill = Category))+
+spei_fig <- ggplot(spei_df_plot, mapping = aes(x = Date, y = Percent, fill = Category))+
             geom_bar(stat = 'identity', width = 10)+
              scale_fill_manual(values = c('0' = '#FFFFFF', '-1' = '#FEFE33', '-2' = '#FFD580', '-3' = '#FFA500', '-4' = '#DC143C', '-5' = '#8C000F'), # define drought category colors according to NDMC: https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx
                               labels = c('No drought', 'Abnormally\ndry', 'Moderate', 'Severe', 'Extreme', 'Exceptional'))+ # define drought category names according to NDMC: https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx
@@ -606,6 +605,29 @@ spei_fig <- ggplot(spei_df, mapping = aes(x = Date, y = Percent, fill = Category
 
 spei_fig
 ```
+
+```{r}
+# Generate table of average and maximum area in drought by year and by category for AOI
+options(scipen = 999)
+
+spei_df_table <- spei_df |>
+  mutate(Pixels = rowSums(across(where(is.numeric)))) |> # calculate total pixels in each row
+  select('Date', 'D0' = '-1', , 'D1' = '-2', 'D2' = '-3', , 'D3' = '-4', 'D4' = '-5', 'Pixels') |> # remove non-drought columns
+  mutate(D0 = ((D0 + D1 + D2 + D3 + D4) / Pixels) * 100,
+         D1 = ((D1 + D2 + D3 + D4) / Pixels) * 100,
+         D2 = ((D2 + D3 + D4) / Pixels) * 100,
+         D3 = ((D3 + D4) / Pixels) * 100,
+         D4 = ((D4) / Pixels) * 100) |> # calculate new columns for the total area in class or in more severe class as percentage
+  mutate(Year = as.numeric(format(Date, '%Y'))) |> # create new column for year to group_by
+  group_by(Year) # calculate maximum and average areas in drought by year for each category
+  
+# Get average area in each drought category (or greater) during each year and round to two decimals
+spei_df_mean_table <- summarize_at(spei_df_table, c('D0', 'D1', 'D2', 'D3', 'D4'), ~round(mean(.), 2))
+
+# Get maximum area in each drought category (or greater) during each year and round to two decimals
+spei_df_max_table <- summarize_at(spei_df_table, c('D0', 'D1', 'D2', 'D3', 'D4'), max)
+```
+
 
 
 ########### wrap it all together 
