@@ -85,6 +85,7 @@ jer_points <-  sf::st_as_sf(x = jer_headers,
                                        "Latitude_NAD83"),
                             crs = 4269)
 ```
+
 <br>
 
 <img src="images/jer_with_ldc_points_map_20240126.png" height="300" align="centered"/>
