@@ -337,7 +337,93 @@ kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = head(gently_sl
 
 Unlike with the LDC, you can't only query using key values for just any variable. There are specific variables that the function can handle: precipitation, frost free days, elevation, slope, landform, parent material origin, parent material kind, or surface texture.
 
-This means that if you want information about a particular ecological site, you can't ask the API for only the relevant data. Instead, you ask for the data in the MLRA that the ecological site belongs to and then keep only the data you need.
+### Getting information for specific ecological sites
+You may want to get all the information for one or more specific ecological sites. In that case, you'd have to grab the information for the relevant MLRAs and then keep only what you want.
+
+``` {r specific_ecosites}
+# These are our ecological sites of interest
+ecosites <- c("R036XB006NM",
+              "R036XB007NM",
+              "R042BB012NM")
+
+# Don't panic! This is over-engineered so that it'll work dynamically with any
+# ecological site IDs. You can always hardcode the MLRA codes if you want!
+mlras <- unique(unlist(stringr::str_extract(string = ecosites,
+                                            # This just looks through the IDs
+                                            # for the MLRA codes, specifically
+                                            # the bits of the IDs where there's
+                                            # three digits and a letter that had
+                                            # an R, F, or W just before them and
+                                            # a letter immediately following them
+                                            pattern = "(?<=[RFW])\\d{3}[A-Z](?=[A-Z])")))
+
+# Then we can grab and filter the data
+# We'll issue a series of data requests, one for each data table we want, and
+# store all the results in a list
+# First up, we'll define which data tables we want. These will be used as the
+# data_type argument
+data_types <- c("climate", "landforms", "soil profile", "annual production")
+
+# The second step is to make a list we can put the data into
+ecosite_data <- list()
+
+# Then we can actually get, filter, and store the data
+for (current_data_type in data_types) {
+  current_data <- trex::fetch_edit(mlra = mlras,
+                                   data_type = current_data_type)
+  
+  # This keeps only the records in the data where the ecological site ID matches
+  # one of the ecological site IDs we actually care about
+  current_relevant_data <- dplyr::filter(.data = current_data,
+                                         `Ecological site ID` %in% ecosites)
+  
+  # This stores the data in the list we made, using the name of the data table
+  ecosite_data[[current_data_type]] <- current_relevant_data
+}
+```
+``` {r example_climate_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = ecosite_data$climate,
+                                                              format = "html",
+                                                              caption = "The contents of ecosite_data$climate"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
+
+<br>
+
+``` {r example_landform_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = ecosite_data$landforms,
+                                                              format = "html",
+                                                              caption = "The contents of ecosite_data$landforms"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
+
+<br>
+
+``` {r example_soilprofile_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = ecosite_data$`soil profile`,
+                                                              format = "html",
+                                                              caption = "The contents of ecosite_data$`soil profile`"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
+
+<br>
+
+``` {r example_annualproduction_table, echo=FALSE}
+kableExtra::scroll_box(kableExtra::kable_styling(knitr::kable(x = ecosite_data$`annual production`,
+                                                              format = "html",
+                                                              caption = "The contents of ecosite_data$`annual production`"),
+                                                 bootstrap_options = "striped"),
+                       height = "300px",
+                       width = "100%")
+```
+
+<br>
 
 ## Summary
 You may want to programmatically retrieve data from the LDC or EDIT, in which case you can use trex functions to do so. For the LDC, you can ask for data using polygons, ecological site IDs, or by values in the data tables. For EDIT, you can ask for data by MLRA or by certain values in data tables.
