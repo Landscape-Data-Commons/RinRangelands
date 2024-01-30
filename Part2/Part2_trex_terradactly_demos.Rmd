@@ -47,9 +47,7 @@ For this example, we'll use the Jornada Experimental Range (JER) in southern New
 
 <br>
 
-```{r map_basic, out.height='300px', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
-knitr::include_graphics(path = "images/jer_map_20240126.png")
-```
+<img src="images/jer_map_20240126.png" height="300" align="centered"/>
 
 <br>
 
@@ -88,9 +86,11 @@ jer_points <-  sf::st_as_sf(x = jer_headers,
                                        "Latitude_NAD83"),
                             crs = 4269)
 ```
-```{r map_points, out.height='300px', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
-knitr::include_graphics(path = "images/jer_with_ldc_points_map_20240126.png")
-```
+<br>
+
+<img src="images/jer_with_ldc_points_map_20240126.png" height="300" align="centered"/>
+
+<br>
 
 However, the headers on their own aren't very useful. Luckily, we can also use `fetch_ldc_spatial()` to grab other kinds of data from the LDC associated with our polygon, including the already-computed standard AIM indicators and raw data from data collection methods like Line-Point Intercept, Gap Intercept, Soil Aggregate Stability, Vegetation Height, and Species Richness.
 
