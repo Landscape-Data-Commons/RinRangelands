@@ -57,7 +57,7 @@ state_base_map <- ggplot(usa) +
 state_base_map
 ```
 
-Good start, lets add the Chihuahan desert study area on this map. 
+Good start, lets add the Chihuahuan desert study area on this map. 
 Remember ggplot figures work like layers, so we can add the desert on top of our base map
 ```{r}
 # lets add in the boundary for the Chihuahan desert 
@@ -77,7 +77,7 @@ us_state_map
 ```
 Awesome, now we have a starting map. Lets move on to working with the data. 
 
-Take a look at the LCD data and clean it up 
+Take a look at the LDC data and clean it up 
 ```{r}
 # Make the DateVisited formatted as date
 data <- data |> dplyr::mutate(DateVisited = lubridate::as_date(DateVisited),
