@@ -6,6 +6,7 @@ output: html_document
 ---
 ###########################
 # TREX
+<img src="images/trex_hex.png" align="right" height="140"/>
 **Accessing public data with trex (Terrestrial Rangeland data EXtraction)**
 ```{r trex_setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
