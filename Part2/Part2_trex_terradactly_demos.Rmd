@@ -51,7 +51,7 @@ For this example, we'll use the Jornada Experimental Range (JER) in southern New
 
 <br>
 
-<img src="images/jer_map_20240126.png" height="300" align="centered"/>
+<img src="images/jer_map_20240126.png" height="300" align="center"/>
 
 <br>
 
@@ -93,7 +93,7 @@ jer_points <-  sf::st_as_sf(x = jer_headers,
 
 <br>
 
-<img src="images/jer_with_ldc_points_map_20240126.png" height="300" align="centered"/>
+<img src="images/jer_with_ldc_points_map_20240126.png" height="300" align="center"/>
 
 <br>
 
