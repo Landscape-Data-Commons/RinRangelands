@@ -9,16 +9,20 @@ output: html_document
 <img src="images/trex_hex.png" align="right" height="140"/>
 **Accessing public data with trex (Terrestrial Rangeland data EXtraction)**
 ```{r trex_setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 # We'll need these installed from CRAN
-required_packages <- c("ggplot2", "sf", "remotes", "knitr", "kableExtra")
+required_packages <- c("ggplot2", "sf", "remotes", "knitr", "kableExtra", "tidyverse")
 install.packages(required_packages[!required_packages %in% installed.packages()])
 
 # And trex if it isn't installed yet, make sure that it is
 if (!"trex" %in% installed.packages()) {
   remotes::install_github(repo = "landscape-data-commons/trex")
 }
+
+# Attach these packages so we don't need to explicitly reference the namespaces
+library(tidyverse)
+library(terradactyl)
 
 # We'll load up all the data we need for later
 boundary_polygon <- sf::st_transform(x = sf::st_read(dsn = "trex",
@@ -431,12 +435,6 @@ You may want to programmatically retrieve data from the LDC or EDIT, in which ca
 # TERRADACTYL
 <img src="images/terradactyl_hex.png" align="right" height="140"/>
 **Using terradactyl to Calculate Indicators of Rangeland Health and Conditions**
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-library(tidyverse)
-library(terradactyl)
-```
 
 ## Section 1: Introduction
 Here, we will walk through the process of using the R package terradactyl to calculate rangeland indicators. This is the tool we used to fill in the data on the Landscape Data Commons, which you can access using trex and the web interface. There are two steps in the terradactyl workflow, the gather stage and the calculation stage. The gather stage reformats raw data into a "tall" format, the calculation step uses that tall data to create the indicators.
