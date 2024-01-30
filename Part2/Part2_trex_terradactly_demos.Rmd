@@ -343,6 +343,7 @@ This means that if you want information about a particular ecological site, you 
 You may want to programmatically retrieve data from the LDC or EDIT, in which case you can use trex functions to do so. For the LDC, you can ask for data using polygons, ecological site IDs, or by values in the data tables. For EDIT, you can ask for data by MLRA or by certain values in data tables.
 
 # TERRADACTYL
+<img src="images/terradactyl_hex.png" align="right" height="140"/>
 **Using terradactyl to Calculate Indicators of Rangeland Health and Conditions**
 
 ```{r setup, include=FALSE}
