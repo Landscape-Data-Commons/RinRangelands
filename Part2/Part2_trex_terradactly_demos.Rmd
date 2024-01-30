@@ -7,11 +7,12 @@ output: html_document
 ###########################
 ## TREX
 # Accessing public data with trex (Terrestrial Rangeland data EXtraction) '
-```{r setup, include=FALSE}
+**Accessing public data with trex (Terrestrial Rangeland data EXtraction)**
+```{r trex_setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 # We'll need these installed from CRAN
-required_packages <- c("ggplot2", "sf", "remotes", "ggmap", "knitr", "kableExtra")
+required_packages <- c("ggplot2", "sf", "remotes", "knitr", "kableExtra")
 install.packages(required_packages[!required_packages %in% installed.packages()])
 
 # And trex if it isn't installed yet, make sure that it is
