@@ -358,7 +358,7 @@ rm(test, endpoint)
 
 ### Import the wind erosion area of interest
 
-This section of the notebook runs using two sample areas of interest for the Sandy Ecological Site Group, but you can run similar analysis for any shapefile. We will import the shapefile as an sf object and upload it to Google Earth Engine and then visualize the Sandy ESG on a leaflet map using the mapview package. 
+This section of the notebook runs using the Sandy Ecological Site Group, but you can run similar analysis for any shapefile. We will import the shapefile as an sf object and upload it to Google Earth Engine and then visualize the Sandy ESG on a leaflet map using the mapview package. 
 
 ```{r}
 # Print the number of vertices in shapefile
@@ -383,6 +383,29 @@ Resources:
 - API Documentation for the Rangeland Analysis Platform dataset is found here: https://docs.climateengine.org/docs/build/html/variables.html#rst-rap-vegetation-cover
 - Documentation on the Rangeland Analysis Platform is available through https://rangelands.app
 
+Let's start by making a request for a single RAP cover type, bare ground.
+``` {r}
+# Create list of API parameters for request
+params <- list(
+  dataset = 'RAP_COVER',
+  variable = 'SHR',
+  start_date = '1986-01-01',
+  end_date = '2023-12-31',
+  area_reducer = 'mean',
+  asset_id = 'users/EricRJensen-DRI/RinRangelands/SandyESG')
+  
+# Make API request and get data from response
+data <- request(base_url = paste0(root_url, 'timeseries/native/custom_asset')) |> # define URL to make request to
+    req_url_query(query = !!!params) |> # define paramaters for request
+    req_headers(Authorization = key) |> # set authentication key as a header for request
+    req_perform() |> # perform request
+    resp_body_json() 
+
+data[1]
+```
+
+Now that we have a handle on how to make a single request, let's loop over the five RAP Cover variables to get all of the data.
+
 ```{r}
 # Make a list of RAP variable options — we will loop over these using the function below to return all of the data
 variables <- c('AFG', 'BGR', 'PFG', 'SHR', 'TRE') 
@@ -400,9 +423,7 @@ for (variable in variables){
     start_date = '1986-01-01',
     end_date = '2023-12-31',
     area_reducer = 'mean',
-    asset_id = 'users/EricRJensen-DRI/RinRangelands/SandyESG',
-    sub_choices = '["SandyESG"]',
-    filter_by = 'id')
+    asset_id = 'users/EricRJensen-DRI/RinRangelands/SandyESG')
   
   # Make API request and get data from response
   data <- request(base_url = paste0(root_url, 'timeseries/native/custom_asset')) |> # define URL to make request to
@@ -441,7 +462,7 @@ Note: We could also visualize the data as a stacked bar chart, similar to with t
 ```{r}
 # Make a simple plot of the time-series data
 rap_cover <- ggplot(data = rap_df)+
-  geom_line(mapping = aes(x = Date, y = Value, colour = Variable), size = 2)+
+  geom_line(mapping = aes(x = Date, y = Value, colour = Variable), linewidth = 2)+
   labs(title = 'Rangeland Analysis Platform (RAP) Vegetation Cover for Sandy ESG', y = 'Fractional cover (%)') +
   scale_colour_manual(values = c("#BF604A", "#BF8C4A", "#A5C737", "#3757AD", "#0A6E1C"), 
                       labels = c("AFG", "BGR", "PFG", "SHR", "TRE"))+
@@ -513,8 +534,6 @@ NOTE: I've pre-run the fetching of the histogram data since it can be time-consu
 #     end_date = as.character(date),
 #     area_reducer = 'mean',
 #     asset_id = 'users/EricRJensen-DRI/RinRangelands/SandyESG',
-#     sub_choices = '["SandyESG"]',
-#     filter_by = 'id',
 #     bins = '[-2, -1.5, -1.2,-0.7, -0.5, 0.5, 0.7, 1.2, 1.5, 2]')
 # 
 #   # Make API request and get data from response
