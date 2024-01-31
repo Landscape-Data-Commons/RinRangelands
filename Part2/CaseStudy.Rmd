@@ -388,7 +388,7 @@ Let's start by making a request for a single RAP cover type, bare ground.
 # Create list of API parameters for request
 params <- list(
   dataset = 'RAP_COVER',
-  variable = 'SHR',
+  variable = 'BGR',
   start_date = '1986-01-01',
   end_date = '2023-12-31',
   area_reducer = 'mean',
@@ -449,7 +449,7 @@ for (variable in variables){
   rap_df <- bind_rows(rap_df, df)
 }
 
-print(rap_df)
+rap_df
 ```
 
 
@@ -466,14 +466,15 @@ rap_cover <- ggplot(data = rap_df)+
   labs(title = 'Rangeland Analysis Platform (RAP) Vegetation Cover for Sandy ESG', y = 'Fractional cover (%)') +
   scale_colour_manual(values = c("#BF604A", "#BF8C4A", "#A5C737", "#3757AD", "#0A6E1C"), 
                       labels = c("AFG", "BGR", "PFG", "SHR", "TRE"))+
-  theme_classic()+
   scale_y_continuous(expand = c(0,0))+
+  theme_classic()+
   theme(legend.position="bottom",
         axis.title.x = element_blank(),
         legend.title=element_blank())
 rap_cover
 ```
 
+Add a line to indicate the year 2015 on the plot
 
 ``` {r}
 # add a line for 2015, since the rest of our benchmark comparison focused on 2015-2022 
@@ -503,7 +504,7 @@ Answer: Between 1986 - 2022, annual average cover in the SandyESG was at least 3
 
 Here, we will get histograms of 180-day SPEI drought data based on accepted drought categories developed by NOAA NIDIS (drought.gov). This will allow us to make a beautiful stacked bar chart to depict the drought history for our AOI. You can learn more about drought indicators and how the Climate Engine team is helping the BLM to assess drought on our support site: https://support.climateengine.org/article/128-rangeland-drought-assessment
 
-In this section we'll be using the # Documentation for this endpoint found here 'zonal_stats/pixel_count/custom_asset' API endpoint. More information: https://docs.climateengine.org/docs/build/html/zonal_statistics.html#rst-zonal-stats-pixel-count-custom-asset
+In this section we'll be using the 'zonal_stats/pixel_count/custom_asset' API endpoint. More information: https://docs.climateengine.org/docs/build/html/zonal_statistics.html#rst-zonal-stats-pixel-count-custom-asset
 
 NOTE: I've pre-run the fetching of the histogram data since it can be time-consuming to run live. Skip ahead to the next section to read-in CSVs of the drought data to produce the stacked bar chart.
 
@@ -513,7 +514,7 @@ NOTE: I've pre-run the fetching of the histogram data since it can be time-consu
 # end_year = 2023
 # yearlist = seq(from = start_year, to = end_year, by = 1)
 # 
-# # Loop over the yearlist to generate a list of dates for each year from 2015-2023 
+# # Loop over the yearlist to generate a list of dates for each year from 2015-2023
 # dates = list()
 # for (year in yearlist){
 #   dates_year <- seq(from = as.Date(paste0(as.character(year), "/1/5")), to = as.Date(paste0(as.character(year), "/12/31")), by = '5 days')
@@ -557,7 +558,7 @@ NOTE: I've pre-run the fetching of the histogram data since it can be time-consu
 # 
 #   return(row_df) }
 # 
-# spei_df <- purrr::map(dates[1:4], get_drought_histogram) |>
+# spei_df <- purrr::map(dates, get_drought_histogram) |>
 #   bind_rows() %>%
 #   mutate(across(everything(), replace_na, 0))
 
@@ -579,12 +580,26 @@ spei_df <- read_csv('data/sandy_esg_spei180d_2015_2023.csv')
 # Clean and prepare the data for plotting the stacked bar chart
 spei_df_plot <- spei_df |> 
   select(-'null') |> # remove null column resulting from gridMET drought data issue
-  pivot_longer(!Date, names_to = 'Category', values_to = 'Count') |> # pivot from wide to long dataframe for plotting
+  pivot_longer(!Date, names_to = 'Category', values_to = 'Count') # pivot from wide to long dataframe for plotting
+spei_df_plot
+```
+
+Create new columns for number of pixels and the percent of Sandy ESG in each drought category for each date
+
+```{r}
+spei_df_plot <- spei_df_plot |>
   group_by(Date) |>
   mutate(Pixels = sum(Count)) |> # calculate sum of pixels for each date for generating histogram
   ungroup() |>
+  mutate(Percent = (Count/Pixels) * 100) # calculate percent of pixels in each class for generating histogram
+spei_df_plot
+```
+
+Convert the Category to a factor and filter out the categories that don't represent drought. Drought categories have negative values.
+
+```{r}
+spei_df_plot <- spei_df_plot |>  
   mutate(Category = factor(Category, levels = c('0', '-1', '-2', '-3', '-4', '-5', '1', '2', '3', '4', '5'))) |> # convert Drought Category to a factor for plotting
-  mutate(Percent = (Count/Pixels) * 100) |> # calculate percent of pixels in each class for generating histogram
   filter(Category %in% c('0', '-1', '-2', '-3', '-4', '-5')) # filter for drought categories
 spei_df_plot
 ```
@@ -595,14 +610,14 @@ Plotting the 180-day SPEI data in ggplot2
 ``` {r}
 # make a figure to display SPEI in the sandy ESG
 spei_plot <- ggplot(spei_df_plot, mapping = aes(x = Date, y = Percent, fill = Category))+
-            geom_bar(stat = 'identity', width = 10)+
-             scale_fill_manual(values = c('0' = '#FFFFFF', '-1' = '#FEFE33', '-2' = '#FFD580', '-3' = '#FFA500', '-4' = '#DC143C', '-5' = '#8C000F'), # define drought category colors according to NDMC: https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx
+  geom_bar(stat = 'identity', width = 10)+
+  scale_fill_manual(values = c('0' = '#FFFFFF', '-1' = '#FEFE33', '-2' = '#FFD580', '-3' = '#FFA500', '-4' = '#DC143C', '-5' = '#8C000F'), # define drought category colors according to NDMC: https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx
                               labels = c('No drought', 'Abnormally\ndry', 'Moderate', 'Severe', 'Extreme', 'Exceptional'))+ # define drought category names according to NDMC: https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx
-            scale_y_continuous(breaks=c(0, 20, 40, 60, 80, 100), expand = c(0, 0)) +
+  scale_y_continuous(breaks=c(0, 20, 40, 60, 80, 100), expand = c(0, 0)) +
   scale_x_date(expand = c(0, 0)) +  # the expand gets rid of gaps between x and y axis lines and the data 
-            labs(title = '180-day SPEI Timeseries Plot for Sandy ESG', x = '', y = 'Percent', fill = 'Drought\nCategory')+
-            theme_classic()+
-            theme(legend.key=element_rect(colour="grey"))
+  labs(title = '180-day SPEI Timeseries Plot for Sandy ESG', x = '', y = 'Percent', fill = 'Drought\nCategory')+
+  theme_classic()+
+  theme(legend.key=element_rect(colour="grey"))
 
 spei_plot
 ```
