@@ -11,7 +11,7 @@
 
 <meta name="author" content="Joe Brehm" />
 
-<meta name="date" content="2024-01-22" />
+<meta name="date" content="2024-01-31" />
 
 <title>Using terradactyl to Calculate Indicators of Rangeland Health and Conditions in R</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Using terradactyl to Calculate Indicators
 of Rangeland Health and Conditions in R</h1>
 <h4 class="author">Joe Brehm</h4>
-<h4 class="date">2024-01-22</h4>
+<h4 class="date">2024-01-31</h4>
 
 </div>
 
@@ -361,12 +361,13 @@ of Rangeland Health and Conditions in R</h1>
 <div id="section-1-introduction" class="section level2">
 <h2>Section 1: Introduction</h2>
 <p>Here, we will walk through the process of using the R package
-terradactyl to calculate rangeland indicators. This is the tool we used
-to fill in the data on the Landscape Data Commons, which you can access
-using trex and the web interface. There are two steps in the terradactyl
-workflow, the gather stage and the calculation stage. The gather stage
-reformats raw data into a “tall” format, the calculation step uses that
-tall data to create the indicators.</p>
+<code>terradactyl</code> to calculate rangeland indicators. This is the
+tool we used to fill in the data on the Landscape Data Commons, which
+you can access using <code>trex</code> and the web interface. There are
+two steps in the <code>terradactyl</code> workflow, the gather stage and
+the calculation stage. The gather stage reformats raw data into a “tall”
+format, the calculation step uses that tall data to create the
+indicators.</p>
 <p>Step 1: Gather tall data</p>
 <ul>
 <li>Input: raw terradat or LMF data</li>
@@ -425,29 +426,29 @@ own row with the layer column entry “Lower1”, and the same with
 <div id="data-harmonization" class="section level4">
 <h4>1.1.2 Data harmonization</h4>
 <p>Data harmonization refers to the process of combining data that are
-stored in different formats (or “schema”), converting all of them to the
-same format. In our case, we work with data from the TerrADat and Land
+stored in different formats (schema), converting all of them to the same
+format. In our case, we work with data from the TerrADat and Land
 Management Framework (LMF) formats. These formats both contain data from
 the same methods, but with different data structures, both wide.</p>
 <p>Compare the wide data above (from TerrADat) to the wide data here
 (from LMF).</p>
 <pre class="r"><code>wideLPI_LMF[1:6,]</code></pre>
-<pre><code>##   POINT  HIT1  HIT2 BASAL
-## 1     1  None        None
-## 2     1  AMUT PENST  None
-## 3     1  None    HL  None
-## 4     1  None        None
-## 5     1  None          RF
-## 6     1 HEMU3          RF</code></pre>
+<pre><code>##   MARK  HIT1  HIT2 BASAL
+## 1    0  AMUT PENST  None
+## 2    3  None    HL  None
+## 3    6  None        None
+## 4    9  None          RF
+## 5   12  None        None
+## 6   15 HEMU3          RF</code></pre>
 <p>These data were collected with the same method as the wide LPI data
 above, but store the data in a different format.</p>
 <p>The most obvious difference here is the column names, for example the
 pin drop location on the surveyed transect is recorded as PointLoc in
-the TerrADat data, and POINT in the LMF data. But there are more
-sinister differences! In the TerrADat-format data we had height data
-recorded, while LMF stores that in another table altogether. And even
-worse, TerrADat-format records its LPI data and metadata in two tables,
-while LMF-format keeps it all in one!</p>
+the TerrADat data, and MARK in the LMF data. But there are more sinister
+differences! In the TerrADat-format data we had height data recorded,
+while LMF stores that in another table altogether. And even worse,
+TerrADat-format records its LPI data and metadata in two tables, while
+LMF-format keeps it all in one!</p>
 <p>To work with this data, we have to solve these harmonization problems
 and get all the data into a single schema.</p>
 </div>
@@ -469,17 +470,18 @@ library(terradactyl)
 path_parent &lt;- &quot;C:/Users/jrbrehm/Documents/GitHub/workspace/SRM 2024 terradactyl demo/&quot;
 path_wide &lt;- file.path(path_parent, &quot;Raw terradat tables&quot;)
 path_tall &lt;- file.path(path_parent, &quot;Tall tables&quot;)</code></pre>
-<p>TerrADat (and LMF) stores data in different tables per method.
-TerrADat, which we are working with today, separately stores data in
-“Header” and “Detail” tables. Header contains essential metadata, such
-as the length of a line and the units of measurement. Detail contains
-the measured data itself. When we looked at tall vs wide data above, we
-were looking at a detail table showing the data recorded by LPI pin
-drops.</p>
+<p>TerrADat stores data in different tables per method (also true for
+LMF, and pretty much any other database). TerrADat, which we are working
+with today, separately stores data in “Header” and “Detail” tables.
+Header contains essential metadata, such as the length of a line and the
+units of measurement. Detail contains the measured data itself. When we
+looked at tall vs wide data above, we were looking at a detail table
+showing the data recorded by LPI pin drops.</p>
 <p>We are going to be running two functions in the gather family,
-gather_lpi() and gather_header(). These functions have other siblings
-for other core AIM methods, such as gather_gap() and gather_height(),
-demonstrated in section 4.1.</p>
+<code>gather_lpi</code> and <code>gather_header</code>. These functions
+have other siblings for other core AIM methods, such as
+<code>gather_gap</code> and <code>gather_height</code>, demonstrated in
+section 4.1.</p>
 <p>To use these we are going to get some TerrADat format data. We will
 also look at some LMF format LPI data to demonstrate the harmonization.
 Throughout this, I am going to be referring to the tables by their names
@@ -491,9 +493,9 @@ in the original databases both in code and as I speak.</p>
 tblLPIHeader &lt;- read.csv(file = file.path(path_wide, &quot;tblLPIHeader.csv&quot;))
 tblLPIDetail &lt;- read.csv(file = file.path(path_wide, &quot;tblLPIDetail.csv&quot;))
 
-# LMF tables are in all caps (or sometimes all lower case) and do not have separate header and detail.
+# LMF tables are in all caps (or sometimes all lower case) and do not have separate header and detail tables.
 PINTERCEPT &lt;- read.csv(file = file.path(path_wide, &quot;PINTERCEPT.csv&quot;))</code></pre>
-<p>Running the gather_lpi function is simple! Just give it the right
+<p>Running <code>gather_lpi</code> is simple, just give it the right
 tables and tell it what source format to expect.</p>
 <pre class="r"><code>lpi_tall_terradat &lt;- 
   gather_lpi(tblLPIHeader = tblLPIHeader, 
@@ -541,18 +543,20 @@ data.</p>
 <p>Though most of the data we need is in tblPlots, the sole exception is
 the date the plot was visited on. In TerrADat (but not LMF), this data
 is stored in the header tables for the different core methods, so we
-need to give it some of those tables.</p>
+need to give terradactyl some of those tables.</p>
 <p>Here we are just sending it LPI and no other headers, but you could
 also give it the header tables for gap, species inventory/richness, and
 any other method with a date record. Note that TerrADat’s data storage
 format allows for a plot to be visited on more than one day (e.g. LPI is
-conducted on June 18, and Gap on June 19). If terradactyl is given more
-than one table and those have different dates, it assigns that plot
-visit the first chronological date (June 18).</p>
+conducted on June 18, and Gap on June 19). If <code>terradactyl</code>
+is given more than one table and those have different dates, it assigns
+that plot visit the first chronological date (June 18).</p>
 <pre class="r"><code>header_terradat &lt;- 
   gather_header(tblPlots = tblPlots, 
-                date_tables = list(tblLPIHeader),
-                # date_tables = list(tblLPIHeader, tblGapHeader, tblSpecRichHeader) # This would also work, if you had the appropriate tables!
+                # Because in most cases we expect (and you should provide) more than one table, the date_tables parameter must be a list
+                date_tables = list(tblLPIHeader), 
+                # This would also work, if you had the appropriate tables. And it would give you better, more complete data
+                # date_tables = list(tblLPIHeader, tblGapHeader, tblSpecRichHeader) 
                 source = &quot;TerrADat&quot;)
 header_terradat %&gt;% 
   dplyr::select(PrimaryKey, PlotID, EcologicalSiteId, Elevation) %&gt;%
@@ -588,17 +592,18 @@ that provide insight into ecological conditions.</p>
 </ul>
 <p>Indicator functions can be run one at a time, but this is unwieldy.
 For the sake of your code’s readability, we strongly recommend you use
-the function build_indicators(). This is demonstrated later in this
-markdown in section 5.1, but for now let’s look at just one method:
-line-point intercept.</p>
+the function <code>build_indicators</code>. This is demonstrated later
+in this markdown in section 5.1, but for now let’s look at just one
+method: line-point intercept.</p>
 <p>For this, we will need the tall LPI data and the header we generated
 above, as well as two new tables, tblSpecies and tblSpeciesGeneric.
 tblSpecies contains species attributes; for example it connects the
-plant code ARTRW8 to <em>Artemisia tridentata wyomingensis</em>, and
-also tells you (and terradactyl) that it is a woody shrub.
-tblSpeciesGeneric is the equivalent for the codes recorded when a crew
-cannot identify a plant further than growth habit and duration
-(e.g. AF01 is the first unknown annual forb the crew encountered).</p>
+plant code ARTRW8 to the name <em>Artemisia tridentata
+wyomingensis</em>, and also tells you (and <code>terradactyl</code>)
+that it is a woody shrub. tblSpeciesGeneric is the equivalent for the
+codes recorded when a crew cannot identify a plant further than growth
+habit and duration (e.g. AF01 is the first unknown annual forb the crew
+encountered).</p>
 <pre class="r"><code>lpi_indicators &lt;-
   lpi_calc(header = readRDS(file.path(path_tall, &quot;header.rdata&quot;)),
            lpi_tall = file.path(path_tall, &quot;lpi_tall.rdata&quot;),
@@ -626,25 +631,26 @@ cannot identify a plant further than growth habit and duration
 ## 4     15.333333
 ## 5     17.333333
 ## 6     14.000000</code></pre>
-<p>The function lpi_calc() calculates over 100 indicators, summarizing
-the very information-rich LPI method data by giving percent cover
+<p>The function <code>lpi_calc</code> calculates over 100 indicators,
+summarizing the information-rich LPI method data by giving percent cover
 values. Above are just a sample: TotalFoliarCover and BareSoilCover are
 self-explanatory; AH_ShrubCover and FH_ShrubCover respectively refer to
-“any hit” and “first hit” indicators. The difference is subtle, but
-essentially if two shrubs are encountered at one point, it will count as
-two hits for any hit cover, and one hit for first hit cover. Generally
-speaking, most ecologists should use any hit indicators, unless you’re
-doing remote sensing work.</p>
+“any hit” and “first hit” indicators of shrub cover. The difference is
+subtle, but essentially if two shrubs are encountered at one point, it
+will count as two hits for any hit cover, and one hit for first hit
+cover. Generally speaking, most users should look at any hit indicators,
+unless you’re doing remote sensing work.</p>
 </div>
 <div id="section-4-gather-indicator-functions-for-other-methods" class="section level2">
 <h2>Section 4: Gather / indicator functions for other methods</h2>
 <p>We have been looking exclusively at LPI data as an example.
-terradactyl also has comparable functions for the other core AIM
-methods: gap, species inventory, soil stability, and height. We won’t
-spend any of our precious time investigating these, but the code to
-generate them is below. Species-level indicators (cover, count, and
+<code>terradactyl</code> also has comparable functions for the other
+core AIM methods: gap, species inventory, soil stability, and height. We
+won’t spend any of our precious time investigating these, but the code
+to generate them is below. Species-level indicators (cover, count, and
 height of each species individually) are produced by the
-accumulated_species() function, demonstrated in section 5.2.</p>
+<code>accumulated_species</code> function, demonstrated in section
+5.2.</p>
 <div id="gather-stage" class="section level3">
 <h3>4.1 Gather stage</h3>
 <pre class="r"><code>tblGapHeader &lt;- read.csv(file.path(path_wide, &quot;tblGapHeader.csv&quot;))
@@ -689,8 +695,8 @@ saveRDS(object = soil_stability_tall,
 </div>
 <div id="indicator-stage" class="section level3">
 <h3>4.2 Indicator stage</h3>
-<p>As mentioned above, the build_indicators() wrapper function,
-demonstrated in the next section, will run all of these in one
+<p>As mentioned above, the <code>build_indicators</code> wrapper
+function, demonstrated in the next section, will run all of these in one
 function.</p>
 <pre class="r"><code>gap_indicators &lt;- 
   gap_calc(
@@ -729,9 +735,9 @@ function.</p>
 lines as possible</h2>
 <p>Calculating indicators one at a time is a lot of code. Fortunately,
 we have a capstone function that runs all of them in a single line:
-build_indicators().</p>
+<code>build_indicators</code>.</p>
 <div id="build_indicators" class="section level3">
-<h3>5.1 build_indicators()</h3>
+<h3>5.1 build_indicators</h3>
 <pre class="r"><code>all_indicators &lt;-
   build_indicators(
     header =  file.path(path_tall, &quot;header.rdata&quot;), # Note that above the &quot;header&quot; input was the read object. Here we use the path, which is read by the function internally
@@ -774,12 +780,12 @@ build_indicators().</p>
 ## 6                 31          3.000000</code></pre>
 </div>
 <div id="accumulated_species" class="section level3">
-<h3>5.2 accumulated_species()</h3>
+<h3>5.2 accumulated_species</h3>
 <p>Species-level indicators (i.e. cover or count of a single species)
-are not included in the build_indicators() output, or the functions run
-in section 4. Instead, another function produces them:
-accumulated_species(). This too is available on the LDC, in the
-“geoSpecies” table.</p>
+are not included in the <code>build_indicators</code> output, or the
+functions run in section 4. Instead, another function produces them:
+<code>accumulated_species</code>. This too is available on the LDC, in
+the “geoSpecies” table.</p>
 <pre class="r"><code>species_indicators &lt;-
   accumulated_species(
     header =  file.path(path_tall, &quot;header.rdata&quot;),
@@ -826,8 +832,8 @@ both tall and indicator data from the LDC using the trex package or the
 web interface.</p>
 <p>Indicator functions exist for all of the core methods (LPI, height,
 gap, soil stability, and species richness), which are all calculated in
-a single function using build_indicators(). Species-level indicators can
-be calculated using accumulated_species().</p>
+a single function using <code>build_indicators</code>. Species-level
+indicators can be calculated using <code>accumulated_species</code>.</p>
 </div>
 
 
