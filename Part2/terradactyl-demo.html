@@ -467,9 +467,8 @@ into a usable format.</p>
 <pre class="r"><code>library(tidyverse)
 library(terradactyl)
 
-path_parent &lt;- &quot;C:/Users/jrbrehm/Documents/GitHub/workspace/SRM 2024 terradactyl demo/&quot;
-path_wide &lt;- file.path(path_parent, &quot;Raw terradat tables&quot;)
-path_tall &lt;- file.path(path_parent, &quot;Tall tables&quot;)</code></pre>
+path_wide &lt;- &quot;Raw terradat tables&quot;
+path_tall &lt;- &quot;Tall tables&quot;</code></pre>
 <p>TerrADat stores data in different tables per method (also true for
 LMF, and pretty much any other database). TerrADat, which we are working
 with today, separately stores data in “Header” and “Detail” tables.

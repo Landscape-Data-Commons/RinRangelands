@@ -37,9 +37,8 @@ In general, data can be in a "wide" or "tall"/"long" format. In wide format data
 Lets take a look at the same data in tall and wide formats from the Line-Point Intercept method (LPI). With LPI, crews record what plants and other ecologically-meaningful objects were hit by a pin flag dropped along at regular intervals along a transect.
 
 ```{r include=FALSE}
-path_parent <- "C:/Users/jrbrehm/Documents/GitHub/workspace/SRM 2024 terradactyl demo/"
-path_wide <- file.path(path_parent, "Raw terradat tables")
-path_tall <- file.path(path_parent, "Tall tables")
+path_wide <- "Raw terradat tables"
+path_tall <- "Tall tables"
 
 tblLPIDetail <- read.csv(file = file.path(path_wide, "tblLPIDetail.csv"))
 dataLPI <- read.csv(file = file.path(paste0(path_tall, "/../", "dataLPI.csv")))
@@ -99,9 +98,8 @@ To begin, lets set some paths and load our required packages.
 library(tidyverse)
 library(terradactyl)
 
-path_parent <- "C:/Users/jrbrehm/Documents/GitHub/workspace/SRM 2024 terradactyl demo/"
-path_wide <- file.path(path_parent, "Raw terradat tables")
-path_tall <- file.path(path_parent, "Tall tables")
+path_wide <- "Raw terradat tables"
+path_tall <- "Tall tables"
 
 ```
 
