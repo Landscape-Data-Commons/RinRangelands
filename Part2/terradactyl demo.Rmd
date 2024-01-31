@@ -13,7 +13,7 @@ library(terradactyl)
 ```
 
 ## Section 1: Introduction
-Here, we will walk through the process of using the R package terradactyl to calculate rangeland indicators. This is the tool we used to fill in the data on the Landscape Data Commons, which you can access using trex and the web interface. There are two steps in the terradactyl workflow, the gather stage and the calculation stage. The gather stage reformats raw data into a "tall" format, the calculation step uses that tall data to create the indicators.
+Here, we will walk through the process of using the R package `terradactyl` to calculate rangeland indicators. This is the tool we used to fill in the data on the Landscape Data Commons, which you can access using `trex` and the web interface. There are two steps in the `terradactyl` workflow, the gather stage and the calculation stage. The gather stage reformats raw data into a "tall" format, the calculation step uses that tall data to create the indicators.
 
 
 Step 1: Gather tall data
@@ -43,7 +43,7 @@ path_tall <- file.path(path_parent, "Tall tables")
 
 tblLPIDetail <- read.csv(file = file.path(path_wide, "tblLPIDetail.csv"))
 dataLPI <- read.csv(file = file.path(paste0(path_tall, "/../", "dataLPI.csv")))
-wideLPI_LMF <- read.csv(file = file.path(path_wide, "PINTERCEPT.csv")) %>% dplyr::filter(POINT == 1) %>% dplyr::select(POINT, HIT1, HIT2, BASAL)
+wideLPI_LMF <- read.csv(file = file.path(path_wide, "PINTERCEPT.csv")) %>% dplyr::arrange(PrimaryKey, MARK) %>% dplyr::select(MARK, HIT1, HIT2, BASAL)
 
 wideLPI <- tblLPIDetail %>% dplyr::select(PrimaryKey, RecKey, PointLoc, TopCanopy, Lower1, SoilSurface, HeightWoody) %>%
   dplyr::arrange(PrimaryKey, PointLoc)
@@ -68,14 +68,13 @@ wideLPI <- wideLPI %>% dplyr::select(-PrimaryKey)
 ```{r}
 wideLPI[1:3,]
 tallLPI[1:9,]
-
 ```
 If you are not intimately familiar with LPI codes, S = soil, WL = woody litter, and L = herbaceous litter. The longer codes refer to plants, e.g. ARTRW8 = *Artemisia tridentata wyomingensis*. HeightWoody is the height of the tallest woody plant within a set radius of the pin flag, recorded at regular intervals.
 
 The wide data has one row per LPI pin drop. Our records for the plant at the top of the canopy, any litter or lower canopy plants, and the soil surface cover are all recorded in that row. The tall data has one row per measurement. Data from the wide column "Lower1" has become its own row with the layer column entry "Lower1", and the same with "SoilSurface" and "TopCanopy."
 
 #### 1.1.2 Data harmonization
-Data harmonization refers to the process of combining data that are stored in different formats (or "schema"), converting all of them to the same format. In our case, we work with data from the TerrADat and Land Management Framework (LMF) formats. These formats both contain data from the same methods, but with different data structures, both wide.
+Data harmonization refers to the process of combining data that are stored in different formats (schema), converting all of them to the same format. In our case, we work with data from the TerrADat and Land Management Framework (LMF) formats. These formats both contain data from the same methods, but with different data structures, both wide.
 
 Compare the wide data above (from TerrADat) to the wide data here (from LMF).
 ``` {r}
@@ -84,7 +83,7 @@ wideLPI_LMF[1:6,]
 
 These data were collected with the same method as the wide LPI data above, but store the data in a different format. 
 
-The most obvious difference here is the column names, for example the pin drop location on the surveyed transect is recorded as PointLoc in the TerrADat data, and POINT in the LMF data. But there are more sinister differences! In the TerrADat-format data we had height data recorded, while LMF stores that in another table altogether. And even worse, TerrADat-format records its LPI data and metadata in two tables, while LMF-format keeps it all in one!
+The most obvious difference here is the column names, for example the pin drop location on the surveyed transect is recorded as PointLoc in the TerrADat data, and MARK in the LMF data. But there are more sinister differences! In the TerrADat-format data we had height data recorded, while LMF stores that in another table altogether. And even worse, TerrADat-format records its LPI data and metadata in two tables, while LMF-format keeps it all in one!
 
 To work with this data, we have to solve these harmonization problems and get all the data into a single schema.
 
@@ -106,9 +105,9 @@ path_tall <- file.path(path_parent, "Tall tables")
 
 ```
 
-TerrADat (and LMF) stores data in different tables per method. TerrADat, which we are working with today, separately stores data in "Header" and "Detail" tables. Header contains essential metadata, such as the length of a line and the units of measurement. Detail contains the measured data itself. When we looked at tall vs wide data above, we were looking at a detail table showing the data recorded by LPI pin drops.
+TerrADat stores data in different tables per method (also true for LMF, and pretty much any other database). TerrADat, which we are working with today, separately stores data in "Header" and "Detail" tables. Header contains essential metadata, such as the length of a line and the units of measurement. Detail contains the measured data itself. When we looked at tall vs wide data above, we were looking at a detail table showing the data recorded by LPI pin drops.
 
-We are going to be running two functions in the gather family, gather_lpi() and gather_header(). These functions have other siblings for other core AIM methods, such as gather_gap() and gather_height(), demonstrated in section 4.1. 
+We are going to be running two functions in the gather family, `gather_lpi` and `gather_header`. These functions have other siblings for other core AIM methods, such as `gather_gap` and `gather_height`, demonstrated in section 4.1. 
 
 To use these we are going to get some TerrADat format data. We will also look at some LMF format LPI data to demonstrate the harmonization. Throughout this, I am going to be referring to the tables by their names in the original databases both in code and as I speak. 
 
@@ -120,11 +119,11 @@ Next lets read in the data
 tblLPIHeader <- read.csv(file = file.path(path_wide, "tblLPIHeader.csv"))
 tblLPIDetail <- read.csv(file = file.path(path_wide, "tblLPIDetail.csv"))
 
-# LMF tables are in all caps (or sometimes all lower case) and do not have separate header and detail.
+# LMF tables are in all caps (or sometimes all lower case) and do not have separate header and detail tables.
 PINTERCEPT <- read.csv(file = file.path(path_wide, "PINTERCEPT.csv"))
 ```
 
-Running the gather_lpi function is simple! Just give it the right tables and tell it what source format to expect.
+Running `gather_lpi` is simple, just give it the right tables and tell it what source format to expect.
 
 ```{r}
 lpi_tall_terradat <- 
@@ -162,15 +161,17 @@ First, read in data. For time, we'll just look at the TerrADat data.
 tblPlots <- read.csv(file = file.path(path_wide, "tblPlots.csv"))
 ```
 
-Though most of the data we need is in tblPlots, the sole exception is the date the plot was visited on. In TerrADat (but not LMF), this data is stored in the header tables for the different core methods, so we need to give it some of those tables. 
+Though most of the data we need is in tblPlots, the sole exception is the date the plot was visited on. In TerrADat (but not LMF), this data is stored in the header tables for the different core methods, so we need to give terradactyl some of those tables. 
 
-Here we are just sending it LPI and no other headers, but you could also give it the header tables for gap, species inventory/richness, and any other method with a date record. Note that TerrADat's data storage format allows for a plot to be visited on more than one day (e.g. LPI is conducted on June 18, and Gap on June 19). If terradactyl is given more than one table and those have different dates, it assigns that plot visit the first chronological date (June 18). 
+Here we are just sending it LPI and no other headers, but you could also give it the header tables for gap, species inventory/richness, and any other method with a date record. Note that TerrADat's data storage format allows for a plot to be visited on more than one day (e.g. LPI is conducted on June 18, and Gap on June 19). If `terradactyl` is given more than one table and those have different dates, it assigns that plot visit the first chronological date (June 18). 
 
 ```{r}
 header_terradat <- 
   gather_header(tblPlots = tblPlots, 
-                date_tables = list(tblLPIHeader),
-                # date_tables = list(tblLPIHeader, tblGapHeader, tblSpecRichHeader) # This would also work, if you had the appropriate tables!
+                # Because in most cases we expect (and you should provide) more than one table, the date_tables parameter must be a list
+                date_tables = list(tblLPIHeader), 
+                # This would also work, if you had the appropriate tables. And it would give you better, more complete data
+                # date_tables = list(tblLPIHeader, tblGapHeader, tblSpecRichHeader) 
                 source = "TerrADat")
 header_terradat %>% 
   dplyr::select(PrimaryKey, PlotID, EcologicalSiteId, Elevation) %>%
@@ -193,9 +194,9 @@ The "indicator" stage takes the tall tables produced by the gather functions and
 - Input: Tall data produced by step 1
 - Output: Indicator data
 
-Indicator functions can be run one at a time, but this is unwieldy. For the sake of your code's readability, we strongly recommend you use the function build_indicators(). This is demonstrated later in this markdown in section 5.1, but for now let's look at just one method: line-point intercept. 
+Indicator functions can be run one at a time, but this is unwieldy. For the sake of your code's readability, we strongly recommend you use the function `build_indicators`. This is demonstrated later in this markdown in section 5.1, but for now let's look at just one method: line-point intercept. 
 
-For this, we will need the tall LPI data and the header we generated above, as well as two new tables, tblSpecies and tblSpeciesGeneric. tblSpecies contains species attributes; for example it connects the plant code ARTRW8 to *Artemisia tridentata wyomingensis*, and also tells you (and terradactyl) that it is a woody shrub. tblSpeciesGeneric is the equivalent for the codes recorded when a crew cannot identify a plant further than growth habit and duration (e.g. AF01 is the first unknown annual forb the crew encountered). 
+For this, we will need the tall LPI data and the header we generated above, as well as two new tables, tblSpecies and tblSpeciesGeneric. tblSpecies contains species attributes; for example it connects the plant code ARTRW8 to the name *Artemisia tridentata wyomingensis*, and also tells you (and `terradactyl`) that it is a woody shrub. tblSpeciesGeneric is the equivalent for the codes recorded when a crew cannot identify a plant further than growth habit and duration (e.g. AF01 is the first unknown annual forb the crew encountered). 
 
 ```{r}
 lpi_indicators <-
@@ -211,10 +212,10 @@ lpi_indicators %>%
   head()
 
 ```
-The function lpi_calc() calculates over 100 indicators, summarizing the very information-rich LPI method data by giving percent cover values. Above are just a sample: TotalFoliarCover and BareSoilCover are self-explanatory; AH_ShrubCover and FH_ShrubCover respectively refer to "any hit" and "first hit" indicators. The difference is subtle, but essentially if two shrubs are encountered at one point, it will count as two hits for any hit cover, and one hit for first hit cover. Generally speaking, most ecologists should use any hit indicators, unless you're doing remote sensing work.
+The function `lpi_calc` calculates over 100 indicators, summarizing the information-rich LPI method data by giving percent cover values. Above are just a sample: TotalFoliarCover and BareSoilCover are self-explanatory; AH_ShrubCover and FH_ShrubCover respectively refer to "any hit" and "first hit" indicators of shrub cover. The difference is subtle, but essentially if two shrubs are encountered at one point, it will count as two hits for any hit cover, and one hit for first hit cover. Generally speaking, most users should look at any hit indicators, unless you're doing remote sensing work.
 
 ## Section 4: Gather / indicator functions for other methods
-We have been looking exclusively at LPI data as an example. terradactyl also has comparable functions for the other core AIM methods: gap, species inventory, soil stability, and height. We won't spend any of our precious time investigating these, but the code to generate them is below. Species-level indicators (cover, count, and height of each species individually) are produced by the accumulated_species() function, demonstrated in section 5.2.
+We have been looking exclusively at LPI data as an example. `terradactyl` also has comparable functions for the other core AIM methods: gap, species inventory, soil stability, and height. We won't spend any of our precious time investigating these, but the code to generate them is below. Species-level indicators (cover, count, and height of each species individually) are produced by the `accumulated_species` function, demonstrated in section 5.2.
 
 ### 4.1 Gather stage
 ``` {r}
@@ -260,7 +261,7 @@ saveRDS(object = soil_stability_tall,
 ```
 
 ### 4.2 Indicator stage
-As mentioned above, the build_indicators() wrapper function, demonstrated in the next section, will run all of these in one function.
+As mentioned above, the `build_indicators` wrapper function, demonstrated in the next section, will run all of these in one function.
 
 ```{r}
 gap_indicators <- 
@@ -292,9 +293,9 @@ soil_stability_indicators <-
 ```
 
 ## Section 5: Wrapper functions, or how to run terradactyl in as few lines as possible
-Calculating indicators one at a time is a lot of code. Fortunately, we have a capstone function that runs all of them in a single line: build_indicators().
+Calculating indicators one at a time is a lot of code. Fortunately, we have a capstone function that runs all of them in a single line: `build_indicators`.
 
-### 5.1 build_indicators()
+### 5.1 build_indicators
 ```{r}
 all_indicators <-
   build_indicators(
@@ -314,8 +315,8 @@ all_indicators %>%
   head()
 
 ```
-### 5.2 accumulated_species()
-Species-level indicators (i.e. cover or count of a single species) are not included in the build_indicators() output, or the functions run in section 4. Instead, another function produces them: accumulated_species(). This too is available on the LDC, in the "geoSpecies" table.
+### 5.2 accumulated_species
+Species-level indicators (i.e. cover or count of a single species) are not included in the `build_indicators` output, or the functions run in section 4. Instead, another function produces them: `accumulated_species`. This too is available on the LDC, in the "geoSpecies" table.
 
 ```{r}
 
@@ -338,4 +339,4 @@ species_indicators %>%
 ## Section 6: Quick summary
 terradactyl can be used to calculate informative ecological data using the AIM methods. There are two stages to the process: gathering tall data, and calculating indicators. If you are interested in the massive BLM-AIM dataset (or several other smaller ones), you can access both tall and indicator data from the LDC using the trex package or the web interface.
 
-Indicator functions exist for all of the core methods (LPI, height, gap, soil stability, and species richness), which are all calculated in a single function using build_indicators(). Species-level indicators can be calculated using accumulated_species().
+Indicator functions exist for all of the core methods (LPI, height, gap, soil stability, and species richness), which are all calculated in a single function using `build_indicators`. Species-level indicators can be calculated using `accumulated_species`.
