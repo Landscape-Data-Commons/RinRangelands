@@ -4,6 +4,9 @@
 ### Welcome to the R in Rangelands workshop for SRM 2024! 
 #### Welcome slides: <https://docs.google.com/presentation/d/1tTa9mxHkDI7pzVbN1SVmzQE3E_lCxu__fQBm4hqZZ6c/edit?usp=sharing>
 
+## Download data for Part 2 of workshop
+https://shorturl.at/djwI4
+
 ## To get started, download this repository to your computer OR following the Rstudio instructions below: 
 1. Navigate to this GitHub repository: github.com/Landscape-Data-Commons/RinRangelands
 2. Navigate to the green <> Code button, and select **Download Zip**
